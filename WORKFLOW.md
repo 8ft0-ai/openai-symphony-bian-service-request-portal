@@ -18,15 +18,54 @@ polling:
 workspace:
   root: ~/dev/workspaces/symphony
 hooks:
+  timeout_ms: 180000
   after_create: |
-    git clone --depth 1 https://github.com/8ft0-ai/openai-symphony-bian-service-request-portal .  
+    git clone --depth 1 https://github.com/8ft0-ai/openai-symphony-bian-service-request-portal .
+    workspace_branch="symphony/$(basename "$PWD")"
+    default_ref="$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null || true)"
+    default_branch="${default_ref#refs/remotes/origin/}"
+    default_branch="${default_branch:-main}"
+    git switch -c "$workspace_branch" "origin/$default_branch" 2>/dev/null || git switch -c "$workspace_branch"
+    git clone --depth 1 https://github.com/openai/symphony .symphony
+    printf '/.symphony/\n' >> .git/info/exclude
+    if ! command -v mise >/dev/null 2>&1; then
+      echo "Missing required tool: mise. Install it from https://mise.jdx.dev/ so Symphony can bootstrap the workspace-local Elixir toolchain." >&2
+      exit 1
+    fi
+    cd .symphony/elixir
+    mise trust
+    mise install
+    mise exec -- mix deps.get
+  before_run: |
+    current_branch="$(git branch --show-current 2>/dev/null || true)"
+    workspace_branch="symphony/$(basename "$PWD")"
+    case "$current_branch" in
+      ""|main|master|trunk|develop)
+        if git show-ref --verify --quiet "refs/heads/$workspace_branch"; then
+          git switch "$workspace_branch"
+        else
+          default_ref="$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null || true)"
+          default_branch="${default_ref#refs/remotes/origin/}"
+          default_branch="${default_branch:-main}"
+          git switch -c "$workspace_branch" "origin/$default_branch" 2>/dev/null || git switch -c "$workspace_branch"
+        fi
+        ;;
+    esac
   before_remove: |
-    cd ~/sandbox/AI/openai/symphony/elixir && mise exec -- mix workspace.before_remove
+    if [ -d .symphony/elixir ]; then
+      if command -v mise >/dev/null 2>&1; then
+        cd .symphony/elixir && mise exec -- mix workspace.before_remove --repo 8ft0-ai/openai-symphony-bian-service-request-portal
+      else
+        echo "Skipping workspace.before_remove; missing required tool 'mise' in PATH" >&2
+      fi
+    else
+      echo "Skipping workspace.before_remove; missing .symphony/elixir"
+    fi
 agent:
   max_concurrent_agents: 10
   max_turns: 20
 codex:
-  command: codex --config shell_environment_policy.inherit=all --config model_reasoning_effort=xhigh --model gpt-5.4 app-server
+  command: codex --config model_reasoning_effort=xhigh --model gpt-5.4 app-server
   approval_policy: never
   thread_sandbox: workspace-write
   turn_sandbox_policy:
@@ -125,6 +164,7 @@ The agent should be able to talk to Linear, either via a configured Linear MCP s
 4. Check whether a PR already exists for the current branch and whether it is closed.
    - If a branch PR exists and is `CLOSED` or `MERGED`, treat prior branch work as non-reusable for this run.
    - Create a fresh branch from `origin/main` and restart execution flow as a new attempt.
+   - Never perform implementation work on a shared default branch such as `main`, `master`, `trunk`, or `develop`.
 5. For `Todo` tickets, do startup sequencing in this exact order:
    - `update_issue(..., state: "In Progress")`
    - find/create `## Codex Workpad` bootstrap comment
@@ -193,6 +233,8 @@ Use this only when completion is blocked by missing required tools or missing au
 ## Step 2: Execution phase (Todo -> In Progress -> Human Review)
 
 1.  Determine current repo state (`branch`, `git status`, `HEAD`) and verify the kickoff `pull` sync result is already recorded in the workpad before implementation continues.
+    - Confirm the current branch is an issue-scoped branch, not a shared default branch.
+    - If the repo is still on `main`, `master`, `trunk`, or `develop`, create or switch to a fresh issue-scoped branch before making edits.
 2.  If current issue state is `Todo`, move it to `In Progress`; otherwise leave the current state unchanged.
 3.  Load the existing workpad comment and treat it as the active execution checklist.
     - Edit it liberally whenever reality changes (scope, risks, validation approach, discovered tasks).
@@ -212,6 +254,8 @@ Use this only when completion is blocked by missing required tools or missing au
     - If app-touching, run `launch-app` validation and capture/upload media via `github-pr-media` before handoff.
 6.  Re-check all acceptance criteria and close any gaps.
 7.  Before every `git push` attempt, run the required validation for your scope and confirm it passes; if it fails, address issues and rerun until green, then commit and push changes.
+    - Use the `push` skill to push the current branch and create or update the branch PR.
+    - Treat an open PR for the current branch as mandatory before handoff unless blocked by documented GitHub auth/permission failure.
 8.  Attach PR URL to the issue (prefer attachment; use the workpad comment only if attachment is unavailable).
     - Ensure the GitHub PR has label `symphony` (add it if missing).
 9.  Merge latest `origin/main` into branch, resolve conflicts, and rerun checks.
@@ -224,6 +268,7 @@ Use this only when completion is blocked by missing required tools or missing au
 11. Before moving to `Human Review`, poll PR feedback and checks:
     - Read the PR `Manual QA Plan` comment (when present) and use it to sharpen UI/runtime test coverage for the current change.
     - Run the full PR feedback sweep protocol.
+    - Confirm there is an open PR for the current non-default branch.
     - Confirm PR checks are passing (green) after the latest changes.
     - Confirm every required ticket-provided validation/test-plan item is explicitly marked complete in the workpad.
     - Repeat this check-address-verify loop until no outstanding comments remain and checks are fully passing.
@@ -261,8 +306,9 @@ Use this only when completion is blocked by missing required tools or missing au
 - Step 1/2 checklist is fully complete and accurately reflected in the single workpad comment.
 - Acceptance criteria and required ticket-provided validation items are complete.
 - Validation/tests are green for the latest commit.
+- Work is committed on an issue-scoped non-default branch for this workspace.
 - PR feedback sweep is complete and no actionable comments remain.
-- PR checks are green, branch is pushed, and PR is linked on the issue.
+- PR checks are green, branch is pushed, an open PR exists for that branch, and the PR is linked on the issue.
 - Required PR metadata is present (`symphony` label).
 - If app-touching, runtime validation/media requirements from `App runtime validation (required)` are complete.
 

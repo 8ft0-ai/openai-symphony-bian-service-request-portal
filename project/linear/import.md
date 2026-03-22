@@ -51,6 +51,13 @@ A few important notes:
 * If you do not pass a project, the issues will still be created against the selected team.
 * If you do not specify a state, Linear assigns the issue to the team’s default backlog or triage state on creation. ([Linear][1])
 
+For this repository, keep the imported issues aligned with the `elixir` team workflow used by `WORKFLOW.md`:
+
+* expected team states are `Backlog`, `Todo`, `In Progress`, `In Review`, `Done`, `Canceled`, and `Duplicate`
+* reviewer-requested changes should move an issue back to `In Progress`
+* approved issues stay in `In Review` until the PR is merged, then move to `Done`
+* do not assume `Rework` or `Merging` states exist for this team
+
 You’ll need Python 3 and the `requests` package:
 
 ```bash

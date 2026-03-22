@@ -21,7 +21,9 @@ hooks:
   timeout_ms: 180000
   after_create: |
     git clone --depth 1 https://github.com/8ft0-ai/openai-symphony-bian-service-request-portal .
-    workspace_branch="symphony/$(basename "$PWD")"
+    workspace_name="$(basename "$PWD")"
+    workspace_ticket="${workspace_name%@*}"
+    workspace_branch="symphony/$workspace_ticket"
     default_ref="$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null || true)"
     default_branch="${default_ref#refs/remotes/origin/}"
     default_branch="${default_branch:-main}"
@@ -38,7 +40,9 @@ hooks:
     mise exec -- mix deps.get
   before_run: |
     current_branch="$(git branch --show-current 2>/dev/null || true)"
-    workspace_branch="symphony/$(basename "$PWD")"
+    workspace_name="$(basename "$PWD")"
+    workspace_ticket="${workspace_name%@*}"
+    workspace_branch="symphony/$workspace_ticket"
     case "$current_branch" in
       ""|main|master|trunk|develop)
         if git show-ref --verify --quiet "refs/heads/$workspace_branch"; then
@@ -161,7 +165,11 @@ The agent should be able to talk to Linear, either via a configured Linear MCP s
    - `Merging` -> on entry, open and follow `.codex/skills/land/SKILL.md`; do not call `gh pr merge` directly.
    - `Rework` -> run rework flow.
    - `Done` -> do nothing and shut down.
-4. Check whether a PR already exists for the current branch and whether it is closed.
+4. Resolve branch, Git writability, and PR state from the local repo before reusing prior work.
+   - Derive `current_branch` from `git branch --show-current`; treat the checked-out repo as the source of truth when it disagrees with Linear `gitBranchName`, workspace folder names, or prior workpad notes.
+   - Determine Git metadata writability with `git_dir="$(git rev-parse --git-dir 2>/dev/null || true)"` followed by `test -n "$git_dir" && test -w "$git_dir"`; do not probe writability by creating temporary files under `.git`.
+   - When checking for an existing PR, first use any PR already attached to the issue. Otherwise query GitHub with `gh pr list --state all --head "$current_branch" --json number,state,title,url`.
+   - If the head-branch lookup returns no rows, run one fallback search by issue identifier, for example `gh pr list --state all --search "{{ issue.identifier }}" --json number,state,title,url`, before concluding no PR exists.
    - If a branch PR exists and is `CLOSED` or `MERGED`, treat prior branch work as non-reusable for this run.
    - Create a fresh branch from `origin/main` and restart execution flow as a new attempt.
    - Never perform implementation work on a shared default branch such as `main`, `master`, `trunk`, or `develop`.
@@ -223,6 +231,7 @@ When a ticket has an attached PR, run this protocol before moving to `Human Revi
 Use this only when completion is blocked by missing required tools or missing auth/permissions that cannot be resolved in-session.
 
 - GitHub is **not** a valid blocker by default. Always try fallback strategies first (alternate remote/auth mode, then continue publish/review flow).
+- Local repository permission failures are a valid blocker when `git rev-parse --git-dir` resolves but that directory is not writable, because required `pull`/`commit`/`push` metadata updates cannot succeed.
 - Do not move to `Human Review` for GitHub access/auth until all fallback strategies have been attempted and documented in the workpad.
 - If a non-GitHub required tool is missing, or required non-GitHub auth is unavailable, move the ticket to `Human Review` with a short blocker brief in the workpad that includes:
   - what is missing,
@@ -234,6 +243,7 @@ Use this only when completion is blocked by missing required tools or missing au
 
 1.  Determine current repo state (`branch`, `git status`, `HEAD`) and verify the kickoff `pull` sync result is already recorded in the workpad before implementation continues.
     - Confirm the current branch is an issue-scoped branch, not a shared default branch.
+    - Use `git branch --show-current` as the canonical branch name for push/PR checks; do not substitute Linear branch metadata when it differs.
     - If the repo is still on `main`, `master`, `trunk`, or `develop`, create or switch to a fresh issue-scoped branch before making edits.
 2.  If current issue state is `Todo`, move it to `In Progress`; otherwise leave the current state unchanged.
 3.  Load the existing workpad comment and treat it as the active execution checklist.
@@ -255,6 +265,7 @@ Use this only when completion is blocked by missing required tools or missing au
 6.  Re-check all acceptance criteria and close any gaps.
 7.  Before every `git push` attempt, run the required validation for your scope and confirm it passes; if it fails, address issues and rerun until green, then commit and push changes.
     - Use the `push` skill to push the current branch and create or update the branch PR.
+    - Resolve `current_branch` immediately before `git push` and `gh pr list`; if the head-branch PR lookup returns empty, retry once with an issue-identifier search before treating PR creation as still pending.
     - Treat an open PR for the current branch as mandatory before handoff unless blocked by documented GitHub auth/permission failure.
 8.  Attach PR URL to the issue (prefer attachment; use the workpad comment only if attachment is unavailable).
     - Ensure the GitHub PR has label `symphony` (add it if missing).
@@ -268,7 +279,7 @@ Use this only when completion is blocked by missing required tools or missing au
 11. Before moving to `Human Review`, poll PR feedback and checks:
     - Read the PR `Manual QA Plan` comment (when present) and use it to sharpen UI/runtime test coverage for the current change.
     - Run the full PR feedback sweep protocol.
-    - Confirm there is an open PR for the current non-default branch.
+    - Confirm there is an open PR for the current non-default branch, using the live `git branch --show-current` value and one fallback lookup by issue identifier if the head-branch query is empty.
     - Confirm PR checks are passing (green) after the latest changes.
     - Confirm every required ticket-provided validation/test-plan item is explicitly marked complete in the workpad.
     - Repeat this check-address-verify loop until no outstanding comments remain and checks are fully passing.
@@ -316,6 +327,7 @@ Use this only when completion is blocked by missing required tools or missing au
 
 - If the branch PR is already closed/merged, do not reuse that branch or prior implementation state for continuation.
 - For closed/merged branch PRs, create a new branch from `origin/main` and restart from reproduction/planning as if starting fresh.
+- Do not test Git metadata writability by creating scratch files under `.git`; use `git rev-parse --git-dir` plus `test -w` instead.
 - If issue state is `Backlog`, do not modify it; wait for human to move to `Todo`.
 - Do not edit the issue body/description for planning or progress tracking.
 - Use exactly one persistent workpad comment (`## Codex Workpad`) per issue.

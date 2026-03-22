@@ -36,8 +36,12 @@ A safe first pass is:
 ```bash
 python upload_linear_backlog.py \
   --folder /path/to/linear_backlog \
-  --team-key ENG \
+  --team-key EXR \
   --dry-run
+```
+
+```bash
+python tools/upload_linear_backlog.py --folder ./test --team-key EXR --project-id hello-world-57626686d7fa --dry-run
 ```
 
 A few important notes:

@@ -32,6 +32,14 @@ other artifacts posted for reviewer consumption.
   from an accessible GitHub location.
 - Do not mark acceptance evidence complete until the final comment/body contains
   openable URLs or pasted excerpts.
+- Normalize every `Acceptance Evidence` row before handoff to this exact shape:
+  `Criterion -> Proof: <...>; Artifact: <...>; Result: <pass|fail|partial>; Notes: <...>`.
+- Use each of those fields exactly once per row.
+- If a pasted excerpt is used instead of a URL, the `Artifact:` field must name a
+  stable locator such as `Validation: npm test excerpt` or
+  `Notes: 2026-03-23 20:55 AEDT Playwright walkthrough excerpt`.
+- Vague locators such as `see notes`, `see validation`, or `local file` are not
+  acceptable evidence.
 
 ## Workflow
 
@@ -48,6 +56,11 @@ other artifacts posted for reviewer consumption.
 4. Re-read the Linear comment and PR body/comment.
 5. Confirm there are no remaining local-only paths such as `artifacts/...` or
    `/Users/...`.
+6. Confirm there are no duplicate `Notes:`/`Artifact:` fields and no free-text
+   fragments outside the normalized evidence row fields.
+7. If no issue-scoped PR exists because `HEAD` already matches `origin/main`, add
+   the standard `No PR applicable` explanation and keep the workpad as the
+   canonical evidence record.
 
 ## Minimum acceptance bar
 
@@ -55,15 +68,20 @@ other artifacts posted for reviewer consumption.
   excerpt location.
 - The PR `QA Evidence` section contains only reviewer-openable references.
 - Reviewers do not need local filesystem access to inspect any artifact.
+- If no PR exists, the workpad explains why with a concrete `No PR applicable`
+  statement and the completed git/PR checks.
 
 ## Good evidence examples
 
 - `Artifact: https://uploads.linear.app/...`
+- `Artifact: Validation: npm test excerpt`
 - `Artifact: https://github.com/<org>/<repo>/actions/runs/<id>`
 - `Artifact: PR comment dated 2026-03-23 with pasted Playwright output`
+- `No PR applicable for this run: HEAD equals origin/main, branch PR lookup returned [], fallback issue search returned [], and no issue-scoped diff remained to publish. Evidence is posted in this Linear workpad.`
 
 ## Bad evidence examples
 
 - `Artifact: artifacts/exr-10-greeting-page.png`
 - `Artifact: /Users/name/Desktop/greeting.png`
 - `Artifact: see local notes`
+- `Artifact: Notes: walkthrough`

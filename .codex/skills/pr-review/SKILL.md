@@ -39,6 +39,8 @@ Follow the repo PR feedback sweep protocol:
    non-openable artifact reference as blocking.
    - Also classify vague pasted-excerpt locators such as `see notes` or
      malformed evidence rows with duplicate/missing fields as blocking.
+   - When the workpad relies on screenshot evidence, also classify screenshot
+     URLs that are not embedded inline in the Linear workpad as blocking.
 6. Summarize open items by category: comments, reviews, checks, QA evidence,
    mergeability.
 
@@ -78,7 +80,8 @@ gh pr comment "$pr" --body "[codex] <response>"
 - `blocking-check`: failing required validation or unresolved red CI run.
 - `blocking-evidence`: QA evidence points to local files, missing uploads, or
   inaccessible artifacts; also use this when evidence rows are malformed or use
-  vague pasted-excerpt locators.
+  vague pasted-excerpt locators, or when required screenshot evidence is linked
+  but not visibly embedded inline in the Linear workpad.
 - `pending-check`: still running; not ready to merge yet.
 - `pushback-ready`: comment should be answered with rationale instead of code.
 - `ready`: no actionable comments remain and checks are green.

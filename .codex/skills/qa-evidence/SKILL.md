@@ -30,6 +30,8 @@ other artifacts posted for reviewer consumption.
 - Short text evidence should usually be pasted directly into the workpad or PR.
 - Screenshots, videos, and longer files should be uploaded to Linear or linked
   from an accessible GitHub location.
+- Screenshot evidence in Linear must be embedded inline in the workpad comment,
+  not left as a bare asset URL.
 - Do not mark acceptance evidence complete until the final comment/body contains
   openable URLs or pasted excerpts.
 - Normalize every `Acceptance Evidence` row before handoff to this exact shape:
@@ -45,14 +47,16 @@ other artifacts posted for reviewer consumption.
 
 1. Inventory every artifact referenced in the workpad and PR draft.
 2. Classify each artifact:
-   - `paste-inline`: short command output, short notes, short logs
-   - `upload-linear`: screenshots, videos, markdown reports, larger logs
-   - `link-check`: GitHub Actions/check run already proves the criterion
+    - `paste-inline`: short command output, short notes, short logs
+    - `embed-inline-image`: screenshots and other image evidence for the Linear workpad
+    - `upload-linear`: videos, markdown reports, larger logs, and non-image files
+    - `link-check`: GitHub Actions/check run already proves the criterion
 3. Replace local file paths with one of:
-   - Linear asset URL
-   - GitHub check/run URL
-   - PR comment location containing pasted evidence
-   - clearly named pasted evidence section in the workpad
+    - Linear asset URL
+    - GitHub check/run URL
+    - PR comment location containing pasted evidence
+    - clearly named pasted evidence section in the workpad
+    - and for screenshots in Linear, add an inline image embed using the uploaded asset URL
 4. Re-read the Linear comment and PR body/comment.
 5. Confirm there are no remaining local-only paths such as `artifacts/...` or
    `/Users/...`.
@@ -70,10 +74,12 @@ other artifacts posted for reviewer consumption.
 - Reviewers do not need local filesystem access to inspect any artifact.
 - If no PR exists, the workpad explains why with a concrete `No PR applicable`
   statement and the completed git/PR checks.
+- Screenshot evidence in Linear is visible inline in the workpad comment.
 
 ## Good evidence examples
 
 - `Artifact: https://uploads.linear.app/...`
+- `![Greeting page showing Hello, Alice](https://uploads.linear.app/...)`
 - `Artifact: Validation: npm test excerpt`
 - `Artifact: https://github.com/<org>/<repo>/actions/runs/<id>`
 - `Artifact: PR comment dated 2026-03-23 with pasted Playwright output`
@@ -85,3 +91,4 @@ other artifacts posted for reviewer consumption.
 - `Artifact: /Users/name/Desktop/greeting.png`
 - `Artifact: see local notes`
 - `Artifact: Notes: walkthrough`
+- `https://uploads.linear.app/...` as a bare screenshot URL with no inline embed

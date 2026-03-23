@@ -211,10 +211,14 @@ The agent should be able to talk to Linear, either via a configured Linear MCP s
     - If changes touch app files or app behavior, add explicit app-specific flow checks to `Acceptance Criteria` in the workpad (for example: launch path, changed interaction path, and expected result path).
     - Do not count `.symphony/` helper files toward this app-touching check unless the ticket explicitly targets Symphony helper tooling itself.
     - If the ticket description/comment context includes `Validation`, `Test Plan`, or `Testing` sections, copy those requirements into the workpad `Acceptance Criteria` and `Validation` sections as required checkboxes (no optional downgrade).
-    - Add an `Acceptance Evidence` section immediately after `Acceptance Criteria` and keep one checklist item per criterion, using this structure: criterion, proof method, artifact URL/upload/pasted excerpt, result, and a brief note.
+    - Add an `Acceptance Evidence` section immediately after `Acceptance Criteria` and keep one checklist item per criterion, using this exact field order: `Criterion -> Proof: <...>; Artifact: <...>; Result: <pass|fail|partial>; Notes: <...>`.
+    - Use each `Acceptance Evidence` field exactly once per entry. If multiple artifacts support the same criterion, keep them together inside the single `Artifact:` field as a concise comma-separated list.
+    - Do not append extra free-text fragments outside `Proof`, `Artifact`, `Result`, and `Notes`.
     - Do not mark an acceptance criterion complete until its matching evidence item is recorded with a concrete artifact or clearly documented command output.
     - Pre-plan the PR-facing `QA Evidence` summary at the same time so the eventual PR can surface the same proof without reviewers needing to hunt through Linear.
     - Plan where each artifact will be posted: upload screenshots/videos/files to Linear or an accessible PR location, and paste short text evidence directly into the workpad or PR when that is clearer than linking a file.
+    - A pasted excerpt counts only when the `Artifact:` field names a stable locator inside the workpad, for example `Validation: npm test excerpt` or `Notes: 2026-03-23 20:55 AEDT Playwright walkthrough excerpt`.
+    - Do not use vague pasted-evidence locators such as `see notes`, `see validation`, or `see local file`.
 7.  Run a principal-style self-review of the plan and refine it in the comment.
 8.  Before implementing, capture a concrete reproduction signal and record it in the workpad `Notes` section (command/output, screenshot, or deterministic UI behavior).
     - Scope repo-layout observations precisely to the paths you actually inspected.
@@ -323,6 +327,7 @@ Use this only when completion is blocked by missing required tools or missing au
     - Re-open and refresh the workpad before state transition so `Plan`, `Acceptance Criteria`, and `Validation` exactly match completed work.
 12. Only then move issue to `In Review`.
     - Exception: if blocked by missing required non-GitHub tools/auth per the blocked-access escape hatch, move to `In Review` with the blocker brief and explicit unblock actions.
+    - If no issue-scoped diff remains because `HEAD` already matches `origin/main` and no issue-scoped PR exists, record `No PR applicable` in `PR QA Evidence` with the git/PR checks performed and keep the Linear workpad as the canonical evidence record.
 13. For `Todo` tickets that already had a PR attached at kickoff:
     - Ensure all existing PR feedback was reviewed and resolved, including inline review comments (code changes or explicit, justified pushback response).
     - Ensure branch was pushed with any required updates.
@@ -433,6 +438,14 @@ Use this exact structure for the persistent workpad comment and keep it updated 
 - [ ] Criterion 1 -> Proof: `<test|command|screenshot|video|manual walkthrough|check run>`; Artifact: `<Linear upload URL|PR media URL|pasted excerpt location>`; Result: `<pass|fail|partial>`; Notes: `<brief takeaway>`
 - [ ] Criterion 2 -> Proof: `<...>`; Artifact: `<accessible URL or pasted excerpt location>`; Result: `<...>`; Notes: `<...>`
 
+#### Acceptance Evidence rules
+
+- Use the field order exactly as shown above.
+- Use each field exactly once per row.
+- Keep multiple artifacts inside the single `Artifact:` field.
+- Valid pasted locators: `Validation: npm test excerpt`, `Notes: 2026-03-23 20:55 AEDT Playwright walkthrough excerpt`.
+- Invalid pasted locators: `see notes`, `see validation`, `local file`, or any other vague reference.
+
 ### PR QA Evidence
 
 - [ ] PR `QA Evidence` section/comment posted
@@ -444,6 +457,11 @@ Use this exact structure for the persistent workpad comment and keep it updated 
 ### Validation
 
 - [ ] targeted tests: `<command>`
+
+#### Validation notes
+
+- Keep validation items in checklist form when possible.
+- When pasting command output or walkthrough excerpts, place them directly below the relevant completed validation item.
 
 ### Notes
 

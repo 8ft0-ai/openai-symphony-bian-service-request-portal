@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Character Counter</title>
+    <link rel="stylesheet" href="./character-counter.css" />
+    <script type="module" src="./character-counter.js"></script>
+  </head>
+  <body>
+    <main class="counter-shell">
+      <section class="counter-card" aria-labelledby="counter-title">
+        <p class="counter-kicker">Text Utility</p>
+        <h1 id="counter-title">See every character and word land in real time.</h1>
+        <p class="counter-intro">
+          Write directly in the field below. Characters include spaces and
+          punctuation, while words come from trimmed text separated by
+          whitespace.
+        </p>
+
+        <div class="counter-field">
+          <label class="counter-label" for="counter-text">Text to analyze</label>
+          <textarea
+            id="counter-text"
+            name="text"
+            rows="8"
+            data-counter-input
+            aria-describedby="counter-helper"
+            placeholder="Try typing Hello world"
+          ></textarea>
+        </div>
+
+        <p id="counter-helper" class="counter-helper">
+          Empty input stays at 0 characters and 0 words. Whitespace still counts
+          as characters but not as words.
+        </p>
+
+        <dl class="counter-stats" aria-live="polite">
+          <div class="counter-stat">
+            <dt>Character count</dt>
+            <dd><output data-character-count>0</output> characters</dd>
+          </div>
+          <div class="counter-stat">
+            <dt>Word count</dt>
+            <dd><output data-word-count>0</output> words</dd>
+          </div>
+        </dl>
+      </section>
+    </main>
+  </body>
+</html>

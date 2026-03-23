@@ -50,6 +50,8 @@ description:
 6. Before writing the PR body, verify QA evidence is actually posted:
    - Replace any local-only artifact paths with accessible Linear asset URLs,
      PR media URLs, check-run URLs, or pasted excerpts.
+   - Normalize every evidence row to `Criterion -> Proof: ...; Artifact: ...; Result: ...; Notes: ...` before reusing it in PR-facing summaries.
+   - Ensure pasted excerpts use stable locators such as `Validation: npm test excerpt`; reject vague references such as `see notes`.
    - If evidence artifacts still exist only on the local filesystem, stop and
      upload/post them before proceeding.
    - Do not treat template examples as completed QA evidence.
@@ -125,6 +127,8 @@ gh pr view --json url -q .url
 - Do not use `--force`; only use `--force-with-lease` as the last resort.
 - Local paths do not count as PR QA evidence; upload/post evidence first, then
   link or paste it into the PR.
+- Pasted evidence in PR text must use a stable locator or be pasted directly;
+  do not reference vague locations such as `see notes`.
 - Distinguish sync problems from remote auth/permission problems:
   - Use the `pull` skill for non-fast-forward or stale-branch issues.
   - Surface auth, permissions, or workflow restrictions directly instead of

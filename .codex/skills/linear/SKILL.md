@@ -375,7 +375,8 @@ Do this in three steps:
 2. Upload the local file bytes to `uploadUrl` with `curl -X PUT` and the exact
    headers returned by `fileUpload`.
 3. Call `linear_graphql` again with `commentCreate` (or `commentUpdate`) and
-   include the resulting `assetUrl` in the comment body.
+   include the resulting `assetUrl` in the comment body. For screenshots and
+   other images, embed the file inline with markdown image syntax.
 
 Useful mutations:
 
@@ -415,17 +416,23 @@ be accessible from the Linear workpad:
    exact response headers.
 3. Update the target comment body so the evidence entry uses the returned
    `assetUrl` instead of a local path.
+   - For screenshot/image evidence, also embed `![descriptive alt text](<assetUrl>)`
+     directly in the workpad comment so the image is visibly rendered inline.
 4. Query the comment again and confirm the body now contains the `assetUrl`.
+5. For screenshot/image evidence, confirm the comment body contains the markdown
+   image embed, not just a bare URL.
 
 Good workpad evidence entries:
 
 - `Artifact: https://uploads.linear.app/...`
 - `Artifact: pasted npm test output under Validation note 2026-03-23 18:31 AEDT`
+- `![Greeting page showing Hello, Alice](https://uploads.linear.app/...)`
 
 Bad workpad evidence entries:
 
 - `Artifact: artifacts/exr-9-greeting-page.png`
 - `Artifact: /tmp/playwright-output.txt`
+- `https://uploads.linear.app/...` as a bare screenshot URL with no inline image embed
 
 ## Usage rules
 

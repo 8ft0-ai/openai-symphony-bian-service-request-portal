@@ -211,10 +211,15 @@ The agent should be able to talk to Linear, either via a configured Linear MCP s
     - If changes touch app files or app behavior, add explicit app-specific flow checks to `Acceptance Criteria` in the workpad (for example: launch path, changed interaction path, and expected result path).
     - Do not count `.symphony/` helper files toward this app-touching check unless the ticket explicitly targets Symphony helper tooling itself.
     - If the ticket description/comment context includes `Validation`, `Test Plan`, or `Testing` sections, copy those requirements into the workpad `Acceptance Criteria` and `Validation` sections as required checkboxes (no optional downgrade).
-    - Add an `Acceptance Evidence` section immediately after `Acceptance Criteria` and keep one checklist item per criterion, using this structure: criterion, proof method, artifact URL/upload/pasted excerpt, result, and a brief note.
+    - Add an `Acceptance Evidence` section immediately after `Acceptance Criteria` and keep one checklist item per criterion, using this exact field order: `Criterion -> Proof: <...>; Artifact: <...>; Result: <pass|fail|partial>; Notes: <...>`.
+    - Use each `Acceptance Evidence` field exactly once per entry. If multiple artifacts support the same criterion, keep them together inside the single `Artifact:` field as a concise comma-separated list.
+    - Do not append extra free-text fragments outside `Proof`, `Artifact`, `Result`, and `Notes`.
     - Do not mark an acceptance criterion complete until its matching evidence item is recorded with a concrete artifact or clearly documented command output.
     - Pre-plan the PR-facing `QA Evidence` summary at the same time so the eventual PR can surface the same proof without reviewers needing to hunt through Linear.
     - Plan where each artifact will be posted: upload screenshots/videos/files to Linear or an accessible PR location, and paste short text evidence directly into the workpad or PR when that is clearer than linking a file.
+    - When screenshot evidence is used for acceptance, embed it inline in the Linear workpad comment; a raw image URL by itself is not sufficient visual proof.
+    - A pasted excerpt counts only when the `Artifact:` field names a stable locator inside the workpad, for example `Validation: npm test excerpt` or `Notes: 2026-03-23 20:55 AEDT Playwright walkthrough excerpt`.
+    - Do not use vague pasted-evidence locators such as `see notes`, `see validation`, or `see local file`.
 7.  Run a principal-style self-review of the plan and refine it in the comment.
 8.  Before implementing, capture a concrete reproduction signal and record it in the workpad `Notes` section (command/output, screenshot, or deterministic UI behavior).
     - Scope repo-layout observations precisely to the paths you actually inspected.
@@ -290,6 +295,7 @@ Use this only when completion is blocked by missing required tools or missing au
     - Changes limited to `.symphony/`, docs, or other non-app files do not by themselves trigger app runtime validation.
     - For each acceptance criterion, capture the strongest practical artifact for the proof type used: targeted test output, command log, screenshot, video, uploaded file, or PR check link.
     - Post artifacts where reviewers can open them: upload to Linear when possible, use accessible PR-hosted media/links for GitHub review, and avoid relying on uncommitted local artifact files.
+    - For screenshot evidence stored in Linear, verify the workpad comment renders the screenshot inline, not merely as a bare URL.
 6.  Re-check all acceptance criteria and close any gaps.
     - Verify every acceptance criterion has a corresponding completed item in `Acceptance Evidence`; missing or vague evidence means the task is not ready for handoff.
 7.  Before every `git push` attempt, run the required validation for your scope and confirm it passes; if it fails, address issues and rerun until green, then commit and push changes.
@@ -319,10 +325,12 @@ Use this only when completion is blocked by missing required tools or missing au
     - Confirm every acceptance criterion has linked evidence with a concrete artifact, not just a prose claim.
     - Confirm the PR contains a visible `QA Evidence` section or comment with accessible links, uploads, or pasted excerpts for the supporting artifacts.
     - Confirm every linked artifact is openable by a reviewer from the PR or Linear issue without local filesystem access.
+    - Confirm every required screenshot artifact is visibly embedded inline in the Linear workpad.
     - Repeat this check-address-verify loop until no outstanding comments remain and checks are fully passing.
     - Re-open and refresh the workpad before state transition so `Plan`, `Acceptance Criteria`, and `Validation` exactly match completed work.
 12. Only then move issue to `In Review`.
     - Exception: if blocked by missing required non-GitHub tools/auth per the blocked-access escape hatch, move to `In Review` with the blocker brief and explicit unblock actions.
+    - If no issue-scoped diff remains because `HEAD` already matches `origin/main` and no issue-scoped PR exists, record `No PR applicable` in `PR QA Evidence` with the git/PR checks performed and keep the Linear workpad as the canonical evidence record.
 13. For `Todo` tickets that already had a PR attached at kickoff:
     - Ensure all existing PR feedback was reviewed and resolved, including inline review comments (code changes or explicit, justified pushback response).
     - Ensure branch was pushed with any required updates.
@@ -412,6 +420,15 @@ Use this exact structure for the persistent workpad comment and keep it updated 
 - [ ] Criterion 1 -> Proof: `<test|command|screenshot|video|manual walkthrough|check run>`; Artifact: `<Linear upload URL|PR media URL|pasted excerpt location>`; Result: `<pass|fail|partial>`; Notes: `<brief takeaway>`
 - [ ] Criterion 2 -> Proof: `<...>`; Artifact: `<accessible URL or pasted excerpt location>`; Result: `<...>`; Notes: `<...>`
 
+#### Acceptance Evidence rules
+
+- Use the field order exactly as shown above.
+- Use each field exactly once per row.
+- Keep multiple artifacts inside the single `Artifact:` field.
+- Valid pasted locators: `Validation: npm test excerpt`, `Notes: 2026-03-23 20:55 AEDT Playwright walkthrough excerpt`.
+- Invalid pasted locators: `see notes`, `see validation`, `local file`, or any other vague reference.
+- Screenshot artifacts must also be embedded inline somewhere in the workpad comment, for example `![Greeting page after valid submission](https://...)`.
+
 ### PR QA Evidence
 
 - [ ] PR `QA Evidence` section/comment posted
@@ -422,15 +439,28 @@ Use this exact structure for the persistent workpad comment and keep it updated 
 
 #### QA Evidence examples
 
+- `QA Evidence examples` are template guidance only; they do not satisfy acceptance criteria by themselves.
 - Good: `Artifact: https://linear.app/.../file/...` or `Artifact: https://github.com/user-attachments/...`
 - Good: `Artifact: PR comment dated 2026-03-23 with pasted Playwright output and screenshot`
 - Good: `Artifact: https://github.com/<org>/<repo>/actions/runs/<id>` when the check run directly proves the criterion
+- Good: ``![Greeting page showing Hello, Alice](https://public.linear.app/...)`` embedded directly in the workpad comment
 - Bad: `Artifact: artifacts/exr-9-greeting-page.png`
 - Bad: `Artifact: /Users/name/Desktop/screenshot.png`
 - Bad: `Artifact: see local notes` or any reference a reviewer cannot open from Linear or GitHub
+- Bad: `https://public.linear.app/...` as a bare screenshot URL with no inline embed in the workpad comment
+
+#### No PR applicable example
+
+- `No PR applicable for this run: HEAD equals origin/main, gh pr list --state all --head "<branch>" returned [], fallback issue search returned [], and no issue-scoped diff remained to publish. Evidence is posted in this Linear workpad.`
+
 ### Validation
 
 - [ ] targeted tests: `<command>`
+
+#### Validation notes
+
+- Keep validation items in checklist form when possible.
+- When pasting command output or walkthrough excerpts, place them directly below the relevant completed validation item.
 
 ### Notes
 

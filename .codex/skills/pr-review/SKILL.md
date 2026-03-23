@@ -37,6 +37,10 @@ Follow the repo PR feedback sweep protocol:
 4. Inspect CI with `gh pr checks` and, when needed, `gh run view --log`.
 5. Inspect the PR `QA Evidence` section/comment and classify any local-only or
    non-openable artifact reference as blocking.
+   - Also classify vague pasted-excerpt locators such as `see notes` or
+     malformed evidence rows with duplicate/missing fields as blocking.
+   - When the workpad relies on screenshot evidence, also classify screenshot
+     URLs that are not embedded inline in the Linear workpad as blocking.
 6. Summarize open items by category: comments, reviews, checks, QA evidence,
    mergeability.
 
@@ -75,7 +79,9 @@ gh pr comment "$pr" --body "[codex] <response>"
 - `blocking-comment`: actionable review comment not yet addressed or answered.
 - `blocking-check`: failing required validation or unresolved red CI run.
 - `blocking-evidence`: QA evidence points to local files, missing uploads, or
-  inaccessible artifacts.
+  inaccessible artifacts; also use this when evidence rows are malformed or use
+  vague pasted-excerpt locators, or when required screenshot evidence is linked
+  but not visibly embedded inline in the Linear workpad.
 - `pending-check`: still running; not ready to merge yet.
 - `pushback-ready`: comment should be answered with rationale instead of code.
 - `ready`: no actionable comments remain and checks are green.
@@ -89,6 +95,8 @@ gh pr comment "$pr" --body "[codex] <response>"
 - When checks fail, include the failing job name, run URL or id, and the likely root cause.
 - When reporting readiness, mention mergeability and whether the PR has the `symphony` label.
 - Treat missing or non-openable QA evidence as a blocker even if tests are green.
+- When no PR exists, verify the workpad contains the standardized `No PR applicable`
+  explanation before treating the issue as handoff-ready.
 
 ## Output guidance
 

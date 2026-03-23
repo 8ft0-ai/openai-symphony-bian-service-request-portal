@@ -428,7 +428,6 @@ Use this exact structure for the persistent workpad comment and keep it updated 
 - Bad: `Artifact: artifacts/exr-9-greeting-page.png`
 - Bad: `Artifact: /Users/name/Desktop/screenshot.png`
 - Bad: `Artifact: see local notes` or any reference a reviewer cannot open from Linear or GitHub
-
 ### Validation
 
 - [ ] targeted tests: `<command>`

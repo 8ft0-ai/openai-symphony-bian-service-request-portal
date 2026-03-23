@@ -14,6 +14,11 @@ function setHiddenState(element, isHidden) {
   element.hidden = isHidden;
 }
 
+function setValidationState(input, validationMessage, isInvalid) {
+  input.setAttribute("aria-invalid", String(isInvalid));
+  setHiddenState(validationMessage, !isInvalid);
+}
+
 export function setupGreetingForm(doc = document) {
   const form = doc.querySelector("[data-greeting-form]");
   const input = doc.querySelector("#name-input");
@@ -32,13 +37,13 @@ export function setupGreetingForm(doc = document) {
   const clearValidation = () => {
     validationMessage.textContent =
       "Please enter your name before greeting yourself.";
-    setHiddenState(validationMessage, true);
+    setValidationState(input, validationMessage, false);
   };
 
   const showValidation = () => {
     validationMessage.textContent =
       "Please enter your name before greeting yourself.";
-    setHiddenState(validationMessage, false);
+    setValidationState(input, validationMessage, true);
   };
 
   const showGreeting = (message) => {

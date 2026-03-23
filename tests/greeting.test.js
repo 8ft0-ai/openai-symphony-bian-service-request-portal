@@ -20,8 +20,19 @@ function createFixture() {
   };
 }
 
-test("the page renders a labelled name input", () => {
-  const { document } = createFixture();
+function submitForm(form, Event) {
+  const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
+  form.dispatchEvent(submitEvent);
+  return submitEvent;
+}
+
+function typeName(input, Event, value) {
+  input.value = value;
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+test("the page renders a labelled name input and greeting trigger control", () => {
+  const { document, submitButton } = createFixture();
   const label = document.querySelector('label[for="name-input"]');
   const input = document.querySelector("#name-input");
 
@@ -29,44 +40,70 @@ test("the page renders a labelled name input", () => {
   assert.equal(label.textContent.trim(), "Your name");
   assert.ok(input);
   assert.equal(input.getAttribute("type"), "text");
-});
-
-test("the page renders the greeting button", () => {
-  const { submitButton } = createFixture();
-
+  assert.equal(input.getAttribute("aria-describedby"), "validation-message");
+  assert.equal(input.getAttribute("aria-invalid"), "false");
+  assert.equal(input.required, true);
   assert.ok(submitButton);
   assert.equal(submitButton.textContent.trim(), "Show greeting");
+  assert.equal(submitButton.disabled, true);
 });
 
-test("submitting a valid name displays and updates the personalised greeting", () => {
+test("submitting a valid name displays the personalised greeting", () => {
   const { form, input, greetingOutput, validationMessage, Event } = createFixture();
 
-  input.value = "Alice";
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  typeName(input, Event, "Alice");
+  const submitEvent = submitForm(form, Event);
 
   assert.equal(greetingOutput.textContent, "Hello, Alice");
   assert.equal(greetingOutput.hidden, false);
   assert.equal(validationMessage.hidden, true);
-
-  input.value = "Moshi";
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-
-  assert.equal(greetingOutput.textContent, "Hello, Moshi");
+  assert.equal(input.getAttribute("aria-invalid"), "false");
+  assert.equal(submitEvent.defaultPrevented, true);
 });
 
-test("empty input never produces an invalid greeting", () => {
-  const { form, input, submitButton, greetingOutput, validationMessage, Event } = createFixture();
+test("submitting an empty name shows validation and no personalised greeting", () => {
+  const { form, input, submitButton, greetingOutput, validationMessage, Event } =
+    createFixture();
 
-  input.value = "   ";
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  typeName(input, Event, "");
+  submitForm(form, Event);
 
   assert.equal(submitButton.disabled, true);
   assert.equal(greetingOutput.hidden, true);
   assert.equal(greetingOutput.textContent, "");
   assert.equal(validationMessage.hidden, false);
   assert.match(validationMessage.textContent, /Please enter your name/);
+  assert.equal(input.getAttribute("aria-invalid"), "true");
   assert.notEqual(greetingOutput.textContent, "Hello, ");
+});
+
+test("submitting whitespace-only input shows validation and no personalised greeting", () => {
+  const { form, input, submitButton, greetingOutput, validationMessage, Event } = createFixture();
+
+  typeName(input, Event, "   ");
+  submitForm(form, Event);
+
+  assert.equal(submitButton.disabled, true);
+  assert.equal(greetingOutput.hidden, true);
+  assert.equal(greetingOutput.textContent, "");
+  assert.equal(validationMessage.hidden, false);
+  assert.match(validationMessage.textContent, /Please enter your name/);
+  assert.equal(input.getAttribute("aria-invalid"), "true");
+  assert.notEqual(greetingOutput.textContent, "Hello, ");
+});
+
+test("submitting a new valid name replaces the previous greeting", () => {
+  const { form, input, greetingOutput, validationMessage, Event } = createFixture();
+
+  typeName(input, Event, "Alice");
+  submitForm(form, Event);
+  assert.equal(greetingOutput.textContent, "Hello, Alice");
+
+  typeName(input, Event, "Moshi");
+  submitForm(form, Event);
+
+  assert.equal(greetingOutput.textContent, "Hello, Moshi");
+  assert.equal(greetingOutput.hidden, false);
+  assert.equal(validationMessage.hidden, true);
+  assert.equal(input.getAttribute("aria-invalid"), "false");
 });

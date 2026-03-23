@@ -38,7 +38,7 @@ test("the page renders the greeting button", () => {
   assert.equal(submitButton.textContent.trim(), "Show greeting");
 });
 
-test("submitting a valid name displays and updates the personalised greeting", () => {
+test("submitting a valid name displays the personalised greeting", () => {
   const { form, input, greetingOutput, validationMessage, Event } = createFixture();
 
   input.value = "Alice";
@@ -48,15 +48,26 @@ test("submitting a valid name displays and updates the personalised greeting", (
   assert.equal(greetingOutput.textContent, "Hello, Alice");
   assert.equal(greetingOutput.hidden, false);
   assert.equal(validationMessage.hidden, true);
-
-  input.value = "Moshi";
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-
-  assert.equal(greetingOutput.textContent, "Hello, Moshi");
 });
 
 test("empty input never produces an invalid greeting", () => {
+  const { form, input, submitButton, greetingOutput, validationMessage, Event } = createFixture();
+
+  assert.equal(submitButton.disabled, true);
+
+  input.value = "";
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+  assert.equal(submitButton.disabled, true);
+  assert.equal(greetingOutput.hidden, true);
+  assert.equal(greetingOutput.textContent, "");
+  assert.equal(validationMessage.hidden, false);
+  assert.match(validationMessage.textContent, /Please enter your name/);
+  assert.notEqual(greetingOutput.textContent, "Hello, ");
+});
+
+test("whitespace-only input never produces an invalid greeting", () => {
   const { form, input, submitButton, greetingOutput, validationMessage, Event } = createFixture();
 
   input.value = "   ";
@@ -69,4 +80,20 @@ test("empty input never produces an invalid greeting", () => {
   assert.equal(validationMessage.hidden, false);
   assert.match(validationMessage.textContent, /Please enter your name/);
   assert.notEqual(greetingOutput.textContent, "Hello, ");
+});
+
+test("submitting a different valid name replaces the previous greeting", () => {
+  const { form, input, greetingOutput, validationMessage, Event } = createFixture();
+
+  input.value = "Alice";
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+  input.value = "Moshi";
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+  assert.equal(greetingOutput.textContent, "Hello, Moshi");
+  assert.equal(greetingOutput.hidden, false);
+  assert.equal(validationMessage.hidden, true);
 });

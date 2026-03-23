@@ -74,7 +74,7 @@ codex:
     writableRoots: ["."]  
     readOnlyAccess:  
       type: fullAccess  
-    networkAccess: false  
+    networkAccess: true  
     excludeTmpdirEnvVar: false  
     excludeSlashTmp: false
 ---

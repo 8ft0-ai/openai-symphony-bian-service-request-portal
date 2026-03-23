@@ -389,6 +389,27 @@ Use this only when completion is blocked by missing required tools or missing au
 - Keep issue text concise, specific, and reviewer-oriented.
 - If blocked and no workpad exists yet, add one blocker comment describing blocker, impact, and next unblock action.
 
+## QA evidence reference
+
+These examples are workflow guidance only. They help agents decide what counts
+as acceptable evidence, but they are not required text in the workpad comment.
+
+Good:
+
+- `Artifact: https://linear.app/.../file/...` or `Artifact: https://github.com/user-attachments/...`
+- `Artifact: PR comment dated 2026-03-23 with pasted Playwright output and screenshot`
+- `Artifact: https://github.com/<org>/<repo>/actions/runs/<id>` when the check run directly proves the criterion
+
+Bad:
+
+- `Artifact: artifacts/exr-9-greeting-page.png`
+- `Artifact: /Users/name/Desktop/screenshot.png`
+- `Artifact: see local notes` or any reference a reviewer cannot open from Linear or GitHub
+
+No PR applicable example:
+
+- `No PR applicable for this run: HEAD equals origin/main, gh pr list --state all --head "<branch>" returned [], fallback issue search returned [], and no issue-scoped diff remained to publish. Evidence is posted in this Linear workpad.`
+
 ## Workpad template
 
 Use this exact structure for the persistent workpad comment and keep it updated in place throughout execution:
@@ -432,20 +453,6 @@ Use this exact structure for the persistent workpad comment and keep it updated 
 - [ ] Includes manual validation result(s): `<walkthrough or runtime check>`
 - [ ] Includes accessible artifact link(s)/upload(s)/pasted excerpt(s): `<Linear file|PR media|log snippet|check run|report>`
 - [ ] Includes reference to the Linear workpad evidence: `<issue/comment URL>`
-
-#### QA Evidence examples
-
-- `QA Evidence examples` are template guidance only; they do not satisfy acceptance criteria by themselves.
-- Good: `Artifact: https://linear.app/.../file/...` or `Artifact: https://github.com/user-attachments/...`
-- Good: `Artifact: PR comment dated 2026-03-23 with pasted Playwright output and screenshot`
-- Good: `Artifact: https://github.com/<org>/<repo>/actions/runs/<id>` when the check run directly proves the criterion
-- Bad: `Artifact: artifacts/exr-9-greeting-page.png`
-- Bad: `Artifact: /Users/name/Desktop/screenshot.png`
-- Bad: `Artifact: see local notes` or any reference a reviewer cannot open from Linear or GitHub
-
-#### No PR applicable example
-
-- `No PR applicable for this run: HEAD equals origin/main, gh pr list --state all --head "<branch>" returned [], fallback issue search returned [], and no issue-scoped diff remained to publish. Evidence is posted in this Linear workpad.`
 
 ### Validation
 

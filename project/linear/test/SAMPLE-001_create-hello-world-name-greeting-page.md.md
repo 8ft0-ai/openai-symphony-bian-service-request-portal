@@ -39,25 +39,59 @@ Example:
 - empty or whitespace-only input must not produce a personalised greeting
 - the interaction must happen on the page without a full page reload
 
+## BDD Scenarios
+### Feature
+Display a personalised greeting after a user enters their name.
+
+### Scenario: Show greeting for a valid name
+Given the greeting page is open
+And the name input is empty
+When the user enters `Alice`
+And the user triggers the greeting
+Then the page displays `Hello, Alice`
+
+### Scenario: Prevent empty greeting submission
+Given the greeting page is open
+When the user leaves the name input empty
+And the user triggers the greeting
+Then the page does not display `Hello, `
+And the user sees a validation message or the action remains disabled
+
+### Scenario: Prevent whitespace-only greeting submission
+Given the greeting page is open
+When the user enters only whitespace
+And the user triggers the greeting
+Then the page does not display a personalised greeting
+And the user sees a validation message or the action remains disabled
+
+### Scenario: Update the greeting when a new name is submitted
+Given the greeting page is open
+And the page currently displays `Hello, Alice`
+When the user changes the input to `Moshi`
+And the user triggers the greeting
+Then the page displays `Hello, Moshi`
+And the previous greeting is replaced
+
 ## Acceptance Criteria
-- [ ] A user can open the page and see a text input for their name
-- [ ] A user can enter a name into the input field
-- [ ] A user can trigger the greeting using the provided button or control
-- [ ] When the user enters `Alice`, the page displays `Hello, Alice`
-- [ ] Empty input is handled gracefully and does not display `Hello, `
-- [ ] The greeting updates correctly if the user enters a different name and submits again
+- [ ] The page provides a clearly labelled name input and a control to trigger the greeting
+- [ ] A valid submitted name produces a personalised greeting on the page without a full page reload
+- [ ] Empty input is blocked from producing an invalid greeting
+- [ ] Whitespace-only input is blocked from producing a personalised greeting
+- [ ] Submitting a different valid name replaces the previous greeting
 
 ## Validation
 ### Automated
-- [ ] Component or UI test confirms the input field renders
-- [ ] Component or UI test confirms the button renders
-- [ ] Component or UI test confirms entering a valid name displays the correct greeting
-- [ ] Component or UI test confirms empty input does not display an invalid greeting
+- [ ] Component or UI test confirms the page renders a labelled name input and greeting trigger control
+- [ ] Component or UI test confirms Scenario: Show greeting for a valid name
+- [ ] Component or UI test confirms Scenario: Prevent empty greeting submission
+- [ ] Component or UI test confirms Scenario: Prevent whitespace-only greeting submission
+- [ ] Component or UI test confirms Scenario: Update the greeting when a new name is submitted
 
 ### Manual
 - [ ] Open the page in a browser
 - [ ] Enter a sample name and confirm the greeting appears correctly
 - [ ] Submit an empty value and confirm validation behaviour is acceptable
+- [ ] Submit a whitespace-only value and confirm validation behaviour is acceptable
 - [ ] Change the name and confirm the greeting updates correctly
 
 ## Dependencies

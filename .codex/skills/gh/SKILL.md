@@ -32,6 +32,31 @@ Use this skill for GitHub work in this repo.
   use `gh` against that target.
 - For merge/land flows in this repo, follow the `land` skill instead of calling
   `gh pr merge` directly unless the user explicitly asks for direct merge work.
+- For PR `QA Evidence`, only use artifact links that a reviewer can open from
+  GitHub or Linear; local-only paths do not count.
+
+## QA evidence guidance
+
+Use GitHub to surface reviewer-facing evidence, not to reference local files.
+
+- Good PR evidence:
+  - GitHub Actions run URLs
+  - PR comment with pasted command output or short validation notes
+  - GitHub-hosted media URL when available in the PR/comment flow
+  - Linear-uploaded artifact URL linked from the PR
+- Bad PR evidence:
+  - `artifacts/foo.png`
+  - `/Users/name/Desktop/foo.png`
+  - `see local notes`
+
+When preparing or reviewing PR evidence:
+
+1. Check the PR body and comments for the `QA Evidence` section.
+2. Confirm each artifact reference is openable without local repo access.
+3. If a text artifact is short, prefer pasting it directly into the PR comment
+   rather than linking a local markdown file.
+4. If evidence only exists locally, post it to Linear or GitHub before marking
+   the PR ready.
 
 ## Common workflow
 
@@ -105,6 +130,9 @@ gh pr edit "$pr" --add-label symphony
 
 # Read top-level Codex review issue comments for the PR
 gh api "repos/$repo/issues/$pr/comments"
+
+# Verify PR body evidence references quickly
+gh pr view "$pr" --json body -q .body
 ```
 
 ## URL patterns
@@ -141,3 +169,5 @@ gh api repos/<owner>/<repo>/actions/runs/<run-id>
 - Keep raw JSON to the minimum needed to answer the request.
 - When reporting PR status in this repo, call out outstanding review comments,
   failing checks, mergeability, and whether the PR has the `symphony` label.
+- When reporting QA evidence status, explicitly say whether the artifacts are
+  openable or still only local references.

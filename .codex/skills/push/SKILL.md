@@ -22,6 +22,9 @@ description:
 
 - `pull`: use this when push is rejected or sync is not clean (non-fast-forward,
   merge conflict risk, or stale branch).
+- `linear`: use this to upload Linear workpad evidence artifacts before handoff.
+- `gh`: use this to post PR comments, check run links, and other GitHub-facing
+  QA evidence.
 
 ## Steps
 
@@ -43,17 +46,25 @@ description:
    - If branch is tied to a closed/merged PR, create a new branch + PR.
    - Write a proper PR title that clearly describes the change outcome
    - For branch updates, explicitly reconsider whether current PR title still
-     matches the latest scope; update it if it no longer does.
-6. Write/update PR body explicitly using `.github/pull_request_template.md`:
-   - Fill every section with concrete content for this change.
-   - Replace all placeholder comments (`<!-- ... -->`).
-   - Keep bullets/checkboxes where template expects them.
+      matches the latest scope; update it if it no longer does.
+6. Before writing the PR body, verify QA evidence is actually posted:
+   - Replace any local-only artifact paths with accessible Linear asset URLs,
+     PR media URLs, check-run URLs, or pasted excerpts.
+   - If evidence artifacts still exist only on the local filesystem, stop and
+     upload/post them before proceeding.
+   - Do not treat template examples as completed QA evidence.
+7. Write/update PR body explicitly using `.github/pull_request_template.md`:
+    - Fill every section with concrete content for this change.
+    - Replace all placeholder comments (`<!-- ... -->`).
+    - Keep bullets/checkboxes where template expects them.
    - If PR already exists, refresh body content so it reflects the total PR
      scope (all intended work on the branch), not just the newest commits,
      including newly added work, removed work, or changed approach.
    - Do not reuse stale description text from earlier iterations.
-7. Validate PR body with `mix pr_body.check` and fix all reported issues.
-8. Reply with the PR URL from `gh pr view`.
+    - In `QA Evidence`, include only accessible artifact URLs/uploads/pasted
+      excerpts; never leave local filesystem paths in the PR body.
+8. Validate PR body with `mix pr_body.check` and fix all reported issues.
+9. Reply with the PR URL from `gh pr view`.
 
 ## Commands
 
@@ -97,7 +108,8 @@ fi
 # Example workflow:
 # 1) open the template and draft body content for this PR
 # 2) gh pr edit --body-file /tmp/pr_body.md
-# 3) for branch updates, re-check that title/body still match current diff
+# 3) verify QA Evidence contains only openable artifacts or pasted excerpts
+# 4) for branch updates, re-check that title/body still match current diff
 
 tmp_pr_body=$(mktemp)
 gh pr view --json body -q .body > "$tmp_pr_body"
@@ -111,6 +123,8 @@ gh pr view --json url -q .url
 ## Notes
 
 - Do not use `--force`; only use `--force-with-lease` as the last resort.
+- Local paths do not count as PR QA evidence; upload/post evidence first, then
+  link or paste it into the PR.
 - Distinguish sync problems from remote auth/permission problems:
   - Use the `pull` skill for non-fast-forward or stale-branch issues.
   - Surface auth, permissions, or workflow restrictions directly instead of

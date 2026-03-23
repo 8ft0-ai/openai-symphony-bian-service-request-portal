@@ -1,0 +1,13 @@
+{
+  "name": "openai-symphony-bian-service-request-portal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 4173 --directory web",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0"
+  }
+}

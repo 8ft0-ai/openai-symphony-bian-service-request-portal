@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Greeting Page</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="greeting-card" aria-labelledby="greeting-title">
+        <p class="eyebrow">Simple Web Greeting</p>
+        <h1 id="greeting-title">Say hello without leaving the page.</h1>
+        <p class="intro">
+          Enter a name, submit it, and the greeting updates instantly below.
+        </p>
+
+        <form class="greeting-form" data-greeting-form novalidate>
+          <label class="field-label" for="name-input">Your name</label>
+          <input
+            id="name-input"
+            name="name"
+            type="text"
+            autocomplete="name"
+            placeholder="Alice"
+          />
+
+          <button id="greet-button" type="submit">Show greeting</button>
+        </form>
+
+        <p id="validation-message" class="feedback feedback-error" hidden>
+          Please enter your name before greeting yourself.
+        </p>
+
+        <p id="greeting-output" class="feedback feedback-success" aria-live="polite" hidden></p>
+      </section>
+    </main>
+  </body>
+</html>

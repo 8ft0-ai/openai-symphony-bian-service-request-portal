@@ -65,12 +65,18 @@ hooks:
 agent:
   max_concurrent_agents: 10
   max_turns: 20
-codex:
-  command: codex --config model_reasoning_effort=xhigh --model gpt-5.4 app-server
-  approval_policy: never
-  thread_sandbox: workspace-write
-  turn_sandbox_policy:
-    type: workspaceWrite
+codex:  
+  command: codex --config model_reasoning_effort=xhigh --model gpt-5.4 app-server  
+  approval_policy: never  
+  thread_sandbox: workspace-write  
+  turn_sandbox_policy:  
+    type: workspaceWrite  
+    writableRoots: ["."]  
+    readOnlyAccess:  
+      type: fullAccess  
+    networkAccess: true  
+    excludeTmpdirEnvVar: false  
+    excludeSlashTmp: false
 ---
 
 You are working on a Linear ticket `{{ issue.identifier }}`
@@ -235,6 +241,12 @@ Use this only when completion is blocked by missing required tools or missing au
 
 - GitHub is **not** a valid blocker by default. Always try fallback strategies first (alternate remote/auth mode, then continue publish/review flow).
 - Local repository permission failures are a valid blocker when `git rev-parse --git-dir` resolves but that directory is not writable, because required `pull`/`commit`/`push` metadata updates cannot succeed.
+- For GitHub publish/review failures, classify the failing layer in the current Codex turn context before declaring a blocker:
+  - Git metadata permissions: `.git` is non-writable, refs/FETCH_HEAD/config cannot be locked, or similar local checkout metadata errors occur.
+  - GitHub network/DNS reachability: `Could not resolve host`, `Could not resolve hostname`, `error connecting to api.github.com`, timeouts, or similar transport failures reaching `github.com` / `api.github.com` occur over HTTPS and SSH.
+  - GitHub auth/authorization: no valid active GitHub account is available, or the reachable GitHub remote/API returns 401/403/access-denied style failures.
+- Run lightweight diagnostics from the failing Codex turn context, not only from workspace hooks, because hook-time connectivity can differ from publish-time connectivity. Prefer evidence such as `gh auth status 2>&1 || true`, `git ls-remote origin HEAD`, `curl -I https://api.github.com || true`, and one DNS probe (`nslookup`, `host`, or `dig`) when those commands are available.
+- Treat `gh auth status` carefully: it may return a non-zero exit code because an inactive stored account is invalid. Do not classify the failure as auth-related if the output still shows a valid `Active account: true` and the observed git/API failures are network/DNS failures.
 - When documenting such failures, describe them as facts about the current checkout/session (for example, `this session's checkout has a non-writable .git directory`), not as a permanent characteristic of the repository itself.
 - Do not move to `In Review` for GitHub access/auth until all fallback strategies have been attempted and documented in the workpad.
 - If a non-GitHub required tool is missing, or required non-GitHub auth is unavailable, move the ticket to `In Review` with a short blocker brief in the workpad that includes:
@@ -272,6 +284,8 @@ Use this only when completion is blocked by missing required tools or missing au
     - Use the `push` skill to push the current branch and create or update the branch PR.
     - Resolve `current_branch` immediately before `git push` and `gh pr list`; if the head-branch PR lookup returns empty, retry once with an issue-identifier search before treating PR creation as still pending.
     - Treat an open PR for the current branch as mandatory before handoff unless blocked by documented GitHub auth/permission failure.
+    - If `git push`, `gh pr list`, or `gh pr create` fails, run the GitHub publish blocker triage from the same Codex turn context and record whether the blocker is git metadata permissions, GitHub network/DNS reachability, or GitHub auth/authorization.
+    - Do not treat `gh auth status` output by itself as proof of auth failure when the same output still shows a valid active account; inactive invalid accounts are noise unless the active account is also unusable.
 8.  Attach PR URL to the issue (prefer attachment; use the workpad comment only if attachment is unavailable).
     - Ensure the GitHub PR has label `symphony` (add it if missing).
 9.  Merge latest `origin/main` into branch, resolve conflicts, and rerun checks.
@@ -343,6 +357,7 @@ Use this only when completion is blocked by missing required tools or missing au
   title/description/acceptance criteria, same-project assignment, a `related`
   link to the current issue, and `blockedBy` when the follow-up depends on the
   current issue.
+- Do not use workspace-hook connectivity checks as the sole evidence for GitHub publish blockers; capture publish-time diagnostics from the Codex turn that actually failed.
 - Do not move to `In Review` unless the `Completion bar before In Review` is satisfied.
 - In `In Review`, do not do implementation work unless review feedback requires moving the issue back to `In Progress`; otherwise wait, poll, and land approved PRs.
 - If state is terminal (`Done`, `Canceled`, or `Duplicate`), do nothing and shut down.

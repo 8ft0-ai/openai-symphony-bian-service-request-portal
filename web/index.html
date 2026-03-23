@@ -24,12 +24,15 @@
             type="text"
             autocomplete="name"
             placeholder="Alice"
+            aria-describedby="validation-message"
+            aria-invalid="false"
+            required
           />
 
           <button id="greet-button" type="submit">Show greeting</button>
         </form>
 
-        <p id="validation-message" class="feedback feedback-error" hidden>
+        <p id="validation-message" class="feedback feedback-error" role="alert" hidden>
           Please enter your name before greeting yourself.
         </p>
 

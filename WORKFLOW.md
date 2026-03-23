@@ -65,12 +65,18 @@ hooks:
 agent:
   max_concurrent_agents: 10
   max_turns: 20
-codex:
-  command: codex --config model_reasoning_effort=xhigh --model gpt-5.4 app-server
-  approval_policy: never
-  thread_sandbox: workspace-write
-  turn_sandbox_policy:
-    type: workspaceWrite
+codex:  
+  command: codex --config model_reasoning_effort=xhigh --model gpt-5.4 app-server  
+  approval_policy: never  
+  thread_sandbox: workspace-write  
+  turn_sandbox_policy:  
+    type: workspaceWrite  
+    writableRoots: ["."]  
+    readOnlyAccess:  
+      type: fullAccess  
+    networkAccess: false  
+    excludeTmpdirEnvVar: false  
+    excludeSlashTmp: false
 ---
 
 You are working on a Linear ticket `{{ issue.identifier }}`

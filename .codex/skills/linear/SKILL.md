@@ -71,6 +71,38 @@ query CommentCreateInputShape {
 
 ## Common workflows
 
+### Post QA evidence to Linear
+
+Use this workflow whenever a ticket requires screenshots, videos, logs, or other
+artifacts to be posted in the Linear workpad.
+
+Rules:
+
+- Do not treat local-only paths such as `artifacts/foo.png` or
+  `/Users/name/Desktop/foo.png` as posted evidence.
+- Do not mark acceptance evidence complete until the artifact is openable from
+  the Linear comment itself.
+- Prefer pasted excerpts for short text evidence (command output, short logs,
+  Playwright notes) instead of uploading a separate text file.
+- Prefer file upload for screenshots, videos, and longer files that are awkward
+  to paste inline.
+
+Workflow:
+
+1. Upload the local file with `fileUpload`.
+2. PUT the bytes to the signed `uploadUrl` with the exact returned headers.
+3. Edit the workpad comment and replace the local path placeholder with the
+   resulting `assetUrl`, or embed the media directly in markdown.
+4. Re-read the comment and verify the artifact URL appears in the final body.
+
+Evidence completion gate:
+
+- `Acceptance Evidence` entries must point to a Linear asset URL, PR media URL,
+  check-run URL, or a clearly named pasted excerpt location.
+- Workpad examples do not count as evidence by themselves.
+- If the workpad only contains examples/templates, the evidence step is still
+  incomplete.
+
 ### Query an issue by key, identifier, or id
 
 Use these progressively:
@@ -372,6 +404,28 @@ mutation FileUpload(
   }
 }
 ```
+
+### Upload any artifact and attach it to a workpad comment
+
+Use this sequence for screenshots, videos, markdown files, or logs that should
+be accessible from the Linear workpad:
+
+1. Query `fileUpload` with the local filename, content type, and byte size.
+2. Upload the local file to the returned `uploadUrl` with `curl -X PUT` and the
+   exact response headers.
+3. Update the target comment body so the evidence entry uses the returned
+   `assetUrl` instead of a local path.
+4. Query the comment again and confirm the body now contains the `assetUrl`.
+
+Good workpad evidence entries:
+
+- `Artifact: https://uploads.linear.app/...`
+- `Artifact: pasted npm test output under Validation note 2026-03-23 18:31 AEDT`
+
+Bad workpad evidence entries:
+
+- `Artifact: artifacts/exr-9-greeting-page.png`
+- `Artifact: /tmp/playwright-output.txt`
 
 ## Usage rules
 

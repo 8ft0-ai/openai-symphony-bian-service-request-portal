@@ -1228,8 +1228,8 @@ A backlog item is complete only when:
 * negative-path and authorisation tests pass
 * audit requirements are satisfied
 * no conflict exists with the manual-review rule
-* QA evidence is posted in the Linear workpad with concrete artifacts or command output for each acceptance criterion
-* the linked PR surfaces a visible `QA Evidence` section or comment summarizing automated and manual proof and linking to the supporting artifacts
+* QA evidence is posted in the Linear workpad with concrete uploaded/openable artifacts or command output for each acceptance criterion
+* the linked PR surfaces a visible `QA Evidence` section or comment summarizing automated and manual proof and linking to accessible supporting artifacts or pasted excerpts
 * product owner acceptance is obtained where applicable
 
 For release readiness, the MVP is done when:

@@ -86,17 +86,27 @@ Use these milestones:
 - `Customer Tracking & Controls`
 - `QA / UAT / Release`
 
-### 5. Use a simple Kanban workflow
+### 5. Use the existing `elixir` team workflow
 
-Suggested states:
+Use the existing Linear team states rather than introducing a second custom
+workflow for this backlog.
 
-- `Triage`
-- `Ready`
+States:
+
+- `Backlog`
+- `Todo`
 - `In Progress`
 - `In Review`
-- `Blocked`
-- `Ready for UAT`
 - `Done`
+- `Canceled`
+- `Duplicate`
+
+Operating meaning:
+
+- `Backlog` is the import and holding queue.
+- `Todo` is the ready-to-pull queue for upcoming work.
+- blocked work is represented through Linear dependency links and blocked views,
+  not a dedicated custom state.
 
 Suggested WIP rules for a solo or very small team:
 

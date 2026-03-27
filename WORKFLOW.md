@@ -66,9 +66,7 @@ agent:
   max_concurrent_agents: 10
   max_turns: 20
 codex:
-  # command: codex --config model_reasoning_effort=xhigh --model gpt-5.4 app-server
-  # command: codex -c shell_environment_policy.inherit=all --profile or-nemotron  app-server
-  command: codex -c shell_environment_policy.inherit=all --profile or-step-flash  app-server
+  command: codex --config model_reasoning_effort=xhigh --model gpt-5.4 app-server
   approval_policy: never
   thread_sandbox: workspace-write
   turn_sandbox_policy:
@@ -416,22 +414,6 @@ Bad:
 No PR applicable example:
 
 - `No PR applicable for this run: HEAD equals origin/main, gh pr list --state all --head "<branch>" returned [], fallback issue search returned [], and no issue-scoped diff remained to publish. Evidence is posted in this Linear workpad.`
-
-## Notes reference
-
-These note examples are workflow guidance only. They should not be copied into a
-live workpad comment.
-
-Good:
-
-- `2026-03-22 13:53 AEDT Reproduction signal:` `rg --files` in inspected ticket-owned paths returned `README.md` and `project/linear/tickets/README_index.md`; `.symphony/` contains helper infrastructure; no frontend app files were found in the inspected ticket-owned paths.
-- `2026-03-22 13:53 AEDT Pull skill evidence:` blocked in this session because the current checkout's `.git` directory is non-writable.
-
-Bad:
-
-- `2026-03-22 13:53 AEDT The repo has no frontend app files.`
-- `2026-03-22 13:53 AEDT The repo's .git directory is read-only.`
-
 ## Workpad template
 
 Use this exact structure for the persistent workpad comment and keep it updated in place throughout execution:
@@ -477,6 +459,21 @@ Use this exact structure for the persistent workpad comment and keep it updated 
 - [ ] Includes accessible artifact link(s)/upload(s)/pasted excerpt(s): `<Linear file|PR media|log snippet|check run|report>`
 - [ ] Includes reference to the Linear workpad evidence: `<issue/comment URL>`
 
+#### QA Evidence examples
+
+- `QA Evidence examples` are template guidance only; they do not satisfy acceptance criteria by themselves.
+- Good: `Artifact: https://linear.app/.../file/...` or `Artifact: https://github.com/user-attachments/...`
+- Good: `Artifact: PR comment dated 2026-03-23 with pasted Playwright output and screenshot`
+- Good: `Artifact: https://github.com/<org>/<repo>/actions/runs/<id>` when the check run directly proves the criterion
+- Good: ``![Greeting page showing Hello, Alice](https://public.linear.app/...)`` embedded directly in the workpad comment
+- Bad: `Artifact: artifacts/exr-9-greeting-page.png`
+- Bad: `Artifact: /Users/name/Desktop/screenshot.png`
+- Bad: `Artifact: see local notes` or any reference a reviewer cannot open from Linear or GitHub
+- Bad: `https://public.linear.app/...` as a bare screenshot URL with no inline embed in the workpad comment
+
+#### No PR applicable example
+
+- `No PR applicable for this run: HEAD equals origin/main, gh pr list --state all --head "<branch>" returned [], fallback issue search returned [], and no issue-scoped diff remained to publish. Evidence is posted in this Linear workpad.`
 ### Validation
 
 - [ ] targeted tests: `<command>`

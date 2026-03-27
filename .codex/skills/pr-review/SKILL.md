@@ -35,7 +35,14 @@ Follow the repo PR feedback sweep protocol:
 3. Treat every actionable human or bot comment as blocking until addressed in code
    or answered with explicit, justified pushback.
 4. Inspect CI with `gh pr checks` and, when needed, `gh run view --log`.
-5. Summarize open items by category: comments, reviews, checks, mergeability.
+5. Inspect the PR `QA Evidence` section/comment and classify any local-only or
+   non-openable artifact reference as blocking.
+   - Also classify vague pasted-excerpt locators such as `see notes` or
+     malformed evidence rows with duplicate/missing fields as blocking.
+   - When the workpad relies on screenshot evidence, also classify screenshot
+     URLs that are not embedded inline in the Linear workpad as blocking.
+6. Summarize open items by category: comments, reviews, checks, QA evidence,
+   mergeability.
 
 ## Commands
 
@@ -56,6 +63,9 @@ gh run list --branch "$(git branch --show-current)" --limit 10
 gh run view <run-id>
 gh run view <run-id> --log
 
+# Inspect PR body for QA Evidence references
+gh pr view "$pr" --json body
+
 # Reply to an inline review comment
 gh api -X POST "/repos/$repo/pulls/$pr/comments" \
   -f body='[codex] <response>' -F in_reply_to=<comment_id>
@@ -68,6 +78,10 @@ gh pr comment "$pr" --body "[codex] <response>"
 
 - `blocking-comment`: actionable review comment not yet addressed or answered.
 - `blocking-check`: failing required validation or unresolved red CI run.
+- `blocking-evidence`: QA evidence points to local files, missing uploads, or
+  inaccessible artifacts; also use this when evidence rows are malformed or use
+  vague pasted-excerpt locators, or when required screenshot evidence is linked
+  but not visibly embedded inline in the Linear workpad.
 - `pending-check`: still running; not ready to merge yet.
 - `pushback-ready`: comment should be answered with rationale instead of code.
 - `ready`: no actionable comments remain and checks are green.
@@ -80,10 +94,13 @@ gh pr comment "$pr" --body "[codex] <response>"
 - For direct merge work, do not call `gh pr merge`; use the `land` skill.
 - When checks fail, include the failing job name, run URL or id, and the likely root cause.
 - When reporting readiness, mention mergeability and whether the PR has the `symphony` label.
+- Treat missing or non-openable QA evidence as a blocker even if tests are green.
+- When no PR exists, verify the workpad contains the standardized `No PR applicable`
+  explanation before treating the issue as handoff-ready.
 
 ## Output guidance
 
-- List unresolved feedback items briefly, grouped by comment/review/check.
+- List unresolved feedback items briefly, grouped by comment/review/check/evidence.
 - Quote only the minimum necessary text from comments.
 - Link each item to its source when possible: review comment, issue comment, or run.
 - End with one clear status: `ready`, `needs fixes`, `needs reply`, or `waiting on checks`.

@@ -1,3 +1,18 @@
+CSV-first flow for this repo:
+
+```bash
+python3 project/linear/tools/build_linear_import_bundle.py
+```
+
+That command writes a ready-to-use bundle to `project/linear/generated/`:
+
+* `linear_import.csv` for Linear CSV import
+* `linear_import_rich.csv` for milestone, order, and dependency review
+* `linear_dependencies.csv` for the post-import blocker-link pass
+* `README.md` with the recommended project/label/milestone setup
+
+Direct API upload flow:
+
 I created the script here:
 
 [upload_linear_backlog.py](sandbox:/mnt/data/upload_linear_backlog.py)

@@ -1,0 +1,2624 @@
+Title,Description,Priority,Status,Labels,Estimate
+API-001: Build the API endpoint used by the customer portal to create a new servicing order,"## Import Metadata
+- Issue key: `API-001`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `API`
+- Priority: High
+- Blocked by: None
+- Blocks: API-002, API-003, API-004, API-005, CP-005, CP-006, CP-007, CP-008, QA-001, SEC-005, SEC-006
+- Source file: `project/linear/tickets/API-001_implement-post-servicingorder-initiate.md`
+
+---
+## Summary
+Build the API endpoint used by the customer portal to create a new servicing order.
+
+## Why
+This endpoint is the entry point for all customer-submitted update requests and creates the trackable workflow record.
+
+## Context
+The endpoint accepts an initiate payload and must create a servicing order with initial status `Pending` for manual CSR review.
+
+## In Scope
+- Accept valid initiate payloads
+- Validate required fields and request type
+- Create a servicing order with status `Pending`
+- Return the created servicing order
+
+## Out of Scope
+- Downstream fulfilment of customer changes
+- CSR status updates
+
+## Requirements
+- Customer-authenticated context is required
+- Required fields and request details must be validated
+- Created requests must enter the manual workflow only
+
+## Acceptance Criteria
+- [ ] Endpoint accepts valid initiate payload
+- [ ] Endpoint validates required fields
+- [ ] Endpoint creates servicing order with status `Pending`
+- [ ] Endpoint returns created servicing order
+- [ ] Invalid payloads return appropriate error responses
+
+## Validation
+### Automated
+- [ ] Contract tests cover valid request creation and required-field validation
+- [ ] Authorisation tests cover unauthenticated and mismatched customer context
+
+### Manual
+- [ ] Call the endpoint with a valid payload and confirm a servicing order is returned
+- [ ] Call the endpoint with missing fields and confirm validation errors
+
+## Dependencies
+- None
+
+## Risks / Controls
+- Risk: Weak validation may create malformed workflow records
+  - Control: Validate request type, customer context, and request details strictly
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,API,
+CP-001: Build the customer login flow for the customer-facing portal using the bank-approved authentication mechanism,"## Import Metadata
+- Issue key: `CP-001`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `CP`
+- Priority: High
+- Blocked by: None
+- Blocks: CP-002, CP-003, CP-004, CP-010
+- Source file: `project/linear/tickets/CP-001_implement-customer-authentication-flow.md`
+
+---
+## Summary
+Build the customer login flow for the customer-facing portal using the bank-approved authentication mechanism.
+
+## Why
+This enables customers to securely access the portal and is the entry point for all customer self-service activity.
+
+## Context
+Customer users need a separate authenticated experience from CSR users. Unauthenticated users must be denied access to protected customer routes and APIs.
+
+## In Scope
+- Provide a customer login screen and authenticated session establishment
+- Handle successful and failed login attempts
+- Redirect authenticated customers to the customer dashboard
+- Protect customer-facing routes behind authentication
+
+## Out of Scope
+- CSR authentication
+- Customer profile editing outside the service request workflow
+
+## Requirements
+- Only authenticated customers can access customer portal functions
+- Invalid or expired credentials are rejected
+- Customer authentication must remain separate from CSR authentication
+
+## Acceptance Criteria
+- [ ] A customer login screen is available
+- [ ] Valid customer credentials authenticate successfully
+- [ ] Invalid or expired credentials are rejected
+- [ ] Unauthenticated users cannot access protected customer routes
+- [ ] Authenticated customers are redirected to the customer dashboard
+
+## Validation
+### Automated
+- [ ] Authentication integration tests cover successful and failed login attempts
+- [ ] Route protection tests cover unauthenticated access denial
+
+### Manual
+- [ ] Log in with valid customer credentials and confirm dashboard access
+- [ ] Attempt access to a protected route without authentication and confirm denial
+
+## Dependencies
+- None
+
+## Risks / Controls
+- Risk: Misconfigured auth could expose customer routes
+  - Control: Enforce route and API protection in both frontend and backend
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CP,
+"CSR-001: Build the staff login flow for CSRs, separate from the customer login flow","## Import Metadata
+- Issue key: `CSR-001`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `CSR`
+- Priority: High
+- Blocked by: None
+- Blocks: CSR-002, CSR-003
+- Source file: `project/linear/tickets/CSR-001_implement-csr-authentication-flow.md`
+
+---
+## Summary
+Build the staff login flow for CSRs, separate from the customer login flow.
+
+## Why
+CSRs need a secure entry point to the staff portal and operational queue.
+
+## Context
+CSR authentication must be distinct from customer authentication and should lead authorised staff to the CSR dashboard.
+
+## In Scope
+- Provide a CSR login screen and authenticated session establishment
+- Handle successful and failed login attempts
+- Redirect authenticated CSRs to the CSR dashboard
+- Protect CSR routes behind staff authentication
+
+## Out of Scope
+- Customer authentication
+- Supervisor or admin roles beyond CSR MVP access
+
+## Requirements
+- Only authenticated staff can access CSR routes
+- CSR authentication remains separate from customer authentication
+
+## Acceptance Criteria
+- [ ] CSR login screen is available
+- [ ] Valid staff credentials authenticate successfully
+- [ ] Invalid credentials are rejected
+- [ ] Unauthenticated users cannot access CSR routes
+- [ ] Authenticated CSR users land on the CSR dashboard
+
+## Validation
+### Automated
+- [ ] Authentication tests cover valid and invalid CSR login attempts
+- [ ] Route protection tests cover unauthenticated access denial to CSR routes
+
+### Manual
+- [ ] Log in with valid CSR credentials and confirm dashboard access
+- [ ] Attempt access to CSR routes without authentication and confirm denial
+
+## Dependencies
+- None
+
+## Risks / Controls
+- Risk: Shared auth configuration with customer flows may blur permissions
+  - Control: Maintain separate auth and authorisation boundaries
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CSR,
+API-002: Build the API endpoint to return a list of servicing orders for queue and history views,"## Import Metadata
+- Issue key: `API-002`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `API`
+- Priority: High
+- Blocked by: API-001
+- Blocks: API-005, API-006, CP-010, CSR-003, CSR-007, QA-001, QA-006
+- Source file: `project/linear/tickets/API-002_implement-get-servicingorder-list-endpoint.md`
+
+---
+## Summary
+Build the API endpoint to return a list of servicing orders for queue and history views.
+
+## Why
+Both the CSR queue and customer history depend on retrieving servicing orders in list form.
+
+## Context
+The endpoint must support status filtering and role-aware access. CSR users can see all relevant requests; customer access must remain restricted to their own records or be filtered through a service layer.
+
+## In Scope
+- Return a list of servicing orders
+- Support filtering by status
+- Enforce role-aware access boundaries
+
+## Out of Scope
+- Advanced analytics or reporting responses
+- Supervisor-specific views
+
+## Requirements
+- Authorised callers can retrieve servicing order lists
+- Role boundaries must be enforced
+- Response data must support CSR queue requirements
+
+## Acceptance Criteria
+- [ ] Authorised callers can retrieve servicing order lists
+- [ ] List supports filtering by status
+- [ ] Role boundaries are enforced
+- [ ] Response data supports CSR queue requirements
+
+## Validation
+### Automated
+- [ ] Contract tests cover status filtering and role-based access
+- [ ] List tests cover CSR queue and customer history retrieval cases
+
+### Manual
+- [ ] Retrieve the list as a CSR and confirm cross-customer queue data appears
+- [ ] Retrieve the list in customer context and confirm only own requests are returned if applicable
+
+## Dependencies
+- API-001
+
+## Risks / Controls
+- Risk: Shared list endpoint may return too much data in customer context
+  - Control: Apply strict role-aware filtering or separate service behaviour
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,API,
+"API-003: Build the API endpoint to retrieve a single servicing order by ID, with role-based response shaping","## Import Metadata
+- Issue key: `API-003`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `API`
+- Priority: High
+- Blocked by: API-001
+- Blocks: API-005, CP-011, CSR-008, QA-001, SEC-001, SEC-002, SEC-006
+- Source file: `project/linear/tickets/API-003_implement-get-servicingorder-servicingorderid-endpoint.md`
+
+---
+## Summary
+Build the API endpoint to retrieve a single servicing order by ID, with role-based response shaping.
+
+## Why
+Customer and CSR detail views both rely on this endpoint, but they require different visibility rules.
+
+## Context
+Customers may retrieve only their own servicing orders and must not receive internal notes. CSRs may retrieve any authorised servicing order including internal notes.
+
+## In Scope
+- Return a servicing order by ID
+- Enforce customer-versus-CSR authorisation rules
+- Shape the response according to role
+
+## Out of Scope
+- Bulk retrieval
+- Workflow mutation through the detail endpoint
+
+## Requirements
+- Unknown IDs return `404`
+- Unauthorised access is denied
+- Customer-facing responses exclude internal notes
+
+## Acceptance Criteria
+- [ ] Authorised caller can retrieve a valid servicing order
+- [ ] Unknown ID returns `404`
+- [ ] Unauthorised access is denied
+- [ ] Customer-facing response excludes internal notes
+
+## Validation
+### Automated
+- [ ] Contract tests cover valid retrieval, not found, and unauthorised cases
+- [ ] Response-shaping tests confirm internal notes are omitted in customer context
+
+### Manual
+- [ ] Retrieve a request as a CSR and confirm internal notes are present
+- [ ] Retrieve the same request as the owning customer and confirm internal notes are absent
+
+## Dependencies
+- API-001
+
+## Risks / Controls
+- Risk: Shared endpoint may leak staff-only data
+  - Control: Implement explicit role-based shaping and test both paths
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,API,
+API-004: Build the API endpoint used by CSRs to update request status and add internal notes,"## Import Metadata
+- Issue key: `API-004`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `API`
+- Priority: High
+- Blocked by: API-001
+- Blocks: API-005, CP-012, CSR-009, CSR-010, CSR-011, CSR-012, CSR-013, CSR-014, QA-001, SEC-003, SEC-004, SEC-005, SEC-006
+- Source file: `project/linear/tickets/API-004_implement-put-servicingorder-servicingorderid-update-endpoint.md`
+
+---
+## Summary
+Build the API endpoint used by CSRs to update request status and add internal notes.
+
+## Why
+This endpoint persists the key operational actions performed by CSRs during manual servicing.
+
+## Context
+The endpoint must require CSR-authenticated context, support valid status transitions, and append internal notes when supplied.
+
+## In Scope
+- Accept update requests from CSR-authenticated context
+- Persist valid status changes
+- Append internal notes when supplied
+- Return the updated servicing order
+
+## Out of Scope
+- Customer-initiated updates
+- Automatic fulfilment of requested profile changes
+
+## Requirements
+- CSR authentication is required
+- Status transition must be valid
+- Internal notes must include required fields when supplied
+- Invalid transitions must be rejected
+
+## Acceptance Criteria
+- [ ] CSR-authenticated context is required
+- [ ] Valid status transitions are persisted
+- [ ] Optional internal note is appended correctly
+- [ ] Invalid transitions return `409` or equivalent error
+- [ ] Response includes updated servicing order
+
+## Validation
+### Automated
+- [ ] Contract tests cover valid status updates and note appends
+- [ ] Error tests cover invalid transitions and unauthorised access
+
+### Manual
+- [ ] Call the endpoint as a CSR and confirm status and note updates persist
+- [ ] Attempt an invalid transition and confirm the error response
+
+## Dependencies
+- API-001
+
+## Risks / Controls
+- Risk: Update endpoint may become a hidden fulfilment path
+  - Control: Keep it limited to workflow state and note changes only
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,API,
+CP-002: Implement authorisation controls so customer users can only access their own data and customer-facing screens,"## Import Metadata
+- Issue key: `CP-002`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `CP`
+- Priority: High
+- Blocked by: CP-001
+- Blocks: CP-004, CP-010, SEC-001
+- Source file: `project/linear/tickets/CP-002_enforce-customer-role-based-access-control.md`
+
+---
+## Summary
+Implement authorisation controls so customer users can only access their own data and customer-facing screens.
+
+## Why
+This protects customer privacy and ensures customers cannot access CSR functions or other customers’ information.
+
+## Context
+Customer users must only retrieve their own profile data and their own servicing orders. Direct URL or API attempts against another customer’s records must be denied.
+
+## In Scope
+- Enforce customer-only access to customer portal routes
+- Restrict API access to the authenticated customer’s own data
+- Block access to CSR pages and CSR-only operations
+
+## Out of Scope
+- CSR permissions model beyond what is needed to block customer access
+- Supervisor or admin roles
+
+## Requirements
+- Customers can retrieve only their own profile data
+- Customers can retrieve only their own servicing orders
+- Customers must not access CSR routes or CSR-only APIs
+
+## Acceptance Criteria
+- [ ] Customer users cannot access CSR routes
+- [ ] Customer users cannot call CSR-only operations successfully
+- [ ] Customer users can retrieve only their own data
+- [ ] Direct URL or API attempts to access another customer’s request are denied
+
+## Validation
+### Automated
+- [ ] Authorisation tests cover cross-customer access denial
+- [ ] API tests cover denial of CSR-only operations in customer context
+
+### Manual
+- [ ] Attempt to access another customer’s request and confirm denial
+- [ ] Attempt to access a CSR page while logged in as a customer and confirm denial
+
+## Dependencies
+- CP-001
+
+## Risks / Controls
+- Risk: Response shaping mistakes may leak data
+  - Control: Enforce access checks server-side and test negative paths
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CP,
+"CP-003: Add customer session handling, timeout behaviour, and logout flow consistent with portal security requirements","## Import Metadata
+- Issue key: `CP-003`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `CP`
+- Priority: High
+- Blocked by: CP-001
+- Blocks: None
+- Source file: `project/linear/tickets/CP-003_implement-customer-session-handling-and-logout.md`
+
+---
+## Summary
+Add customer session handling, timeout behaviour, and logout flow consistent with portal security requirements.
+
+## Why
+Customers need a stable and secure authenticated session, and the bank needs sessions to expire and terminate correctly.
+
+## Context
+The customer portal must preserve authenticated access during normal use while preventing continued access after logout or expiry.
+
+## In Scope
+- Session creation and persistence for authenticated customers
+- Logout flow that ends the session
+- Session expiry handling and re-authentication prompts
+
+## Out of Scope
+- Single sign-on enhancements beyond MVP
+- CSR session handling
+
+## Requirements
+- Authenticated sessions persist correctly during valid use
+- Logout ends the customer session
+- Expired sessions require re-authentication
+
+## Acceptance Criteria
+- [ ] Authenticated customer session persists correctly during valid use
+- [ ] Logout ends the session
+- [ ] Session expiry prevents further protected access
+- [ ] Expired sessions require re-authentication
+
+## Validation
+### Automated
+- [ ] Session expiry tests cover protected route denial after timeout
+- [ ] Logout tests confirm session invalidation
+
+### Manual
+- [ ] Log in, navigate across customer pages, and confirm session continuity
+- [ ] Log out and confirm protected pages are no longer accessible
+
+## Dependencies
+- CP-001
+
+## Risks / Controls
+- Risk: Stale sessions may keep sensitive pages available
+  - Control: Invalidate session tokens and enforce backend checks
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CP,
+CSR-002: Ensure only authenticated CSR users can access CSR portal functions and staff request operations,"## Import Metadata
+- Issue key: `CSR-002`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `CSR`
+- Priority: High
+- Blocked by: CSR-001
+- Blocks: CSR-003
+- Source file: `project/linear/tickets/CSR-002_enforce-csr-role-based-access-control.md`
+
+---
+## Summary
+Ensure only authenticated CSR users can access CSR portal functions and staff request operations.
+
+## Why
+This protects staff functions from customer access and ensures only authorised users can manage servicing orders.
+
+## Context
+CSR users need access to the queue, detail views, notes, and status updates. Non-CSR users must be blocked.
+
+## In Scope
+- Restrict CSR routes to authenticated staff
+- Block non-CSR users from staff-only APIs and screens
+- Permit authorised CSR access to queue and detail views
+
+## Out of Scope
+- Fine-grained supervisor permissions
+- Customer data ownership rules beyond what is needed for CSR access
+
+## Requirements
+- CSR-only actions are blocked for non-CSR users
+- Authorised CSRs can access the service request queue and detail views
+
+## Acceptance Criteria
+- [ ] CSR routes require staff authentication
+- [ ] CSR-only actions are blocked for non-CSR users
+- [ ] Authorised CSR users can access the service request queue and detail views
+
+## Validation
+### Automated
+- [ ] Authorisation tests cover denial of CSR routes to customer users
+- [ ] API tests cover denial of CSR-only operations in non-CSR context
+
+### Manual
+- [ ] Log in as a customer and confirm CSR routes are denied
+- [ ] Log in as a CSR and confirm staff routes are accessible
+
+## Dependencies
+- CSR-001
+
+## Risks / Controls
+- Risk: Missing backend checks may allow API access despite hidden UI controls
+  - Control: Enforce role checks server-side as well as in the UI
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CSR,
+"API-005: Add validation, standardised error payloads, and consistent failure responses across the servicing order API","## Import Metadata
+- Issue key: `API-005`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `API`
+- Priority: High
+- Blocked by: API-001, API-002, API-003, API-004
+- Blocks: QA-001
+- Source file: `project/linear/tickets/API-005_implement-api-validation-and-standard-error-handling.md`
+
+---
+## Summary
+Add validation, standardised error payloads, and consistent failure responses across the servicing order API.
+
+## Why
+Consistent validation and error handling reduce ambiguity for portal clients and simplify QA and support.
+
+## Context
+The API should return predictable status codes and payload shapes for validation failures, auth failures, not found, and invalid workflow transitions.
+
+## In Scope
+- Validate request payloads consistently across endpoints
+- Standardise error payload structure
+- Return consistent HTTP status codes for common failure cases
+
+## Out of Scope
+- Extended business analytics in errors
+- Non-standard endpoint-specific failure formats
+
+## Requirements
+- Validation errors return `400`
+- Unauthenticated requests return `401`
+- Forbidden operations return `403`
+- Not found returns `404`
+- Invalid workflow transitions return `409`
+
+## Acceptance Criteria
+- [ ] Validation errors return `400`
+- [ ] Unauthenticated requests return `401`
+- [ ] Forbidden operations return `403`
+- [ ] Not found returns `404`
+- [ ] Invalid workflow transitions return `409`
+- [ ] Error payload structure is consistent
+
+## Validation
+### Automated
+- [ ] Contract tests verify status codes and payload structure for each failure class
+- [ ] Regression tests confirm endpoints use the shared error contract
+
+### Manual
+- [ ] Trigger representative validation, auth, not-found, and conflict errors and confirm consistent responses
+
+## Dependencies
+- API-001
+- API-002
+- API-003
+- API-004
+
+## Risks / Controls
+- Risk: Inconsistent errors create fragile UI handling
+  - Control: Adopt and enforce a single shared error contract
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,API,
+API-006: Add richer filtering and pagination support to improve scalability for CSR queue use cases,"## Import Metadata
+- Issue key: `API-006`
+- Project: Service Request Portal MVP
+- Milestone: CSR Processing
+- Domain label: `API`
+- Priority: Medium
+- Blocked by: API-002
+- Blocks: None
+- Source file: `project/linear/tickets/API-006_expand-api-filtering-and-pagination-support.md`
+
+---
+## Summary
+Add richer filtering and pagination support to improve scalability for CSR queue use cases.
+
+## Why
+As request volume grows, queue retrieval needs more control and better performance characteristics.
+
+## Context
+This is a post-MVP enhancement building on the basic list endpoint to support pagination and broader filtering.
+
+## In Scope
+- Add pagination parameters to list retrieval
+- Return enough metadata for paging
+- Support additional filters in a backwards-compatible way
+
+## Out of Scope
+- Changes to core workflow rules
+- Supervisor reporting endpoints
+
+## Requirements
+- Pagination must not weaken authorisation behaviour
+- Additional filtering must remain backwards compatible
+
+## Acceptance Criteria
+- [ ] Pagination parameters are supported
+- [ ] Response includes enough metadata for paging
+- [ ] Additional filters can be added without breaking existing consumers
+
+## Validation
+### Automated
+- [ ] Contract tests cover paged retrieval and response metadata
+- [ ] Regression tests confirm existing consumers still work
+
+### Manual
+- [ ] Retrieve multiple pages of queue results and confirm paging behaviour
+
+## Dependencies
+- API-002
+
+## Risks / Controls
+- Risk: Paging design may complicate customer history unnecessarily
+  - Control: Keep advanced paging focused on CSR queue use cases
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",Medium,,API,
+CP-004: Create the customer dashboard showing the customer’s current personal information on record,"## Import Metadata
+- Issue key: `CP-004`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `CP`
+- Priority: High
+- Blocked by: CP-001, CP-002
+- Blocks: CP-005, CP-006, CP-007
+- Source file: `project/linear/tickets/CP-004_build-customer-dashboard-with-current-profile-display.md`
+
+---
+## Summary
+Create the customer dashboard showing the customer’s current personal information on record.
+
+## Why
+Customers need to understand what details are currently on file before they submit an update request.
+
+## Context
+The dashboard is the landing experience after login and should show address, phone number, and email address where available.
+
+## In Scope
+- Display current address, phone number, and email on file
+- Load dashboard after successful login
+- Handle empty or partially populated profile fields gracefully
+
+## Out of Scope
+- Direct editing of profile data
+- CSR-only information or internal notes
+
+## Requirements
+- Dashboard data must reflect the source profile record presented to the portal
+- Only the authenticated customer’s profile may be shown
+
+## Acceptance Criteria
+- [ ] Dashboard loads after successful login
+- [ ] Current address is displayed where available
+- [ ] Current phone number is displayed where available
+- [ ] Current email address is displayed where available
+- [ ] Displayed data matches the source provided to the portal
+
+## Validation
+### Automated
+- [ ] UI tests cover dashboard rendering with full and partial profile data
+- [ ] Authorisation tests confirm only the authenticated customer’s data is shown
+
+### Manual
+- [ ] Log in as a customer and confirm current profile fields are displayed correctly
+- [ ] Verify the dashboard does not expose CSR-only information
+
+## Dependencies
+- CP-001
+- CP-002
+
+## Risks / Controls
+- Risk: Incorrect source mapping may show stale data
+  - Control: Use a clear profile source contract and verify test fixtures
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CP,
+CP-010: Create a request history view showing all servicing orders for the authenticated customer only,"## Import Metadata
+- Issue key: `CP-010`
+- Project: Service Request Portal MVP
+- Milestone: Customer Tracking & Controls
+- Domain label: `CP`
+- Priority: High
+- Blocked by: CP-001, CP-002, API-002
+- Blocks: CP-011, CP-012, QA-002, QA-003
+- Source file: `project/linear/tickets/CP-010_build-customer-request-history-list.md`
+
+---
+## Summary
+Create a request history view showing all servicing orders for the authenticated customer only.
+
+## Why
+Customers need a single place to track the requests they have already submitted.
+
+## Context
+The history list should show request type, submission date, and status, and must not include other customers’ requests.
+
+## In Scope
+- List the authenticated customer’s servicing orders
+- Show key request metadata in the history view
+- Handle empty state when no requests exist
+
+## Out of Scope
+- CSR queue functions
+- Customer-visible internal notes or staff-only metadata
+
+## Requirements
+- Only the authenticated customer’s requests may be shown
+- The history list must support later navigation to request detail
+
+## Acceptance Criteria
+- [ ] Request history displays customer’s requests only
+- [ ] Each row shows request type, submission date, and status
+- [ ] Empty state is handled if no requests exist
+
+## Validation
+### Automated
+- [ ] List rendering tests cover populated and empty states
+- [ ] Authorisation tests confirm cross-customer records are not returned
+
+### Manual
+- [ ] Log in as a customer with existing requests and confirm the list contents
+- [ ] Log in as a customer with no requests and confirm the empty state
+
+## Dependencies
+- CP-001
+- CP-002
+- API-002
+
+## Risks / Controls
+- Risk: Customer list endpoint may leak staff fields
+  - Control: Use role-aware response shaping and UI filtering
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CP,
+"CSR-003: Create the centralised service request queue for CSRs, displaying requests across customers","## Import Metadata
+- Issue key: `CSR-003`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `CSR`
+- Priority: High
+- Blocked by: CSR-001, CSR-002, API-002
+- Blocks: CSR-004, CSR-005, CSR-006, CSR-007, CSR-008, QA-002, QA-004, QA-006
+- Source file: `project/linear/tickets/CSR-003_build-csr-work-queue-dashboard.md`
+
+---
+## Summary
+Create the centralised service request queue for CSRs, displaying requests across customers.
+
+## Why
+CSRs need a single operational queue to triage and manage manual servicing work efficiently.
+
+## Context
+The queue is the main CSR working surface and should show customer name, request type, submission date, and status.
+
+## In Scope
+- Display a queue of servicing orders across customers
+- Show key metadata in each queue row
+- Support navigation from queue to request detail
+
+## Out of Scope
+- Supervisor analytics and team views
+- Customer-facing request history
+
+## Requirements
+- Queue data must be available only to authenticated CSR users
+- Queue must support manual servicing operations
+
+## Acceptance Criteria
+- [ ] Queue loads successfully for authenticated CSR users
+- [ ] Queue rows include customer name, request type, submission date, and status
+- [ ] Queue supports operational use for manual servicing
+
+## Validation
+### Automated
+- [ ] UI tests cover queue rendering with multiple requests
+- [ ] Authorisation tests confirm only CSR users can access the queue
+
+### Manual
+- [ ] Log in as a CSR and confirm the queue displays expected requests and fields
+- [ ] Open a request from the queue and confirm navigation works
+
+## Dependencies
+- CSR-001
+- CSR-002
+- API-002
+
+## Risks / Controls
+- Risk: Queue usability may be poor if core metadata is missing
+  - Control: Include the minimum operational fields in every row
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CSR,
+SEC-001: Implement and verify controls preventing customers from retrieving servicing orders that do not belong to them,"## Import Metadata
+- Issue key: `SEC-001`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `SEC`
+- Priority: High
+- Blocked by: CP-002, API-003
+- Blocks: None
+- Source file: `project/linear/tickets/SEC-001_block-unauthorised-access-to-other-customers-requests.md`
+
+---
+## Summary
+Implement and verify controls preventing customers from retrieving servicing orders that do not belong to them.
+
+## Why
+This is a core privacy and access-control requirement for the product.
+
+## Context
+Customer users must only ever see their own servicing orders, regardless of UI path or direct API request attempts.
+
+## In Scope
+- Enforce ownership checks on customer request retrieval
+- Deny cross-customer access through UI and API
+- Cover the control with automated tests
+
+## Out of Scope
+- CSR access rules beyond normal staff authorisation
+- Supervisor-specific exceptions
+
+## Requirements
+- Cross-customer access attempts are denied
+- Denial behaviour is consistent across UI and API
+
+## Acceptance Criteria
+- [ ] Cross-customer access attempts are denied
+- [ ] Denial behaviour is consistent across UI and API
+- [ ] Control is covered by automated tests
+
+## Validation
+### Automated
+- [ ] Authorisation tests cover direct API attempts against another customer’s request
+- [ ] UI tests cover blocked navigation where applicable
+
+### Manual
+- [ ] Attempt to open another customer’s request while logged in as a customer and confirm denial
+
+## Dependencies
+- CP-002
+- API-003
+
+## Risks / Controls
+- Risk: Identifier guessing or direct linking may expose data
+  - Control: Enforce ownership checks server-side on every read
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,SEC,
+"SEC-003: Persist and expose audit metadata for status changes, including actor and timestamp","## Import Metadata
+- Issue key: `SEC-003`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `SEC`
+- Priority: High
+- Blocked by: API-004
+- Blocks: CSR-009
+- Source file: `project/linear/tickets/SEC-003_capture-audit-metadata-for-status-changes.md`
+
+---
+## Summary
+Persist and expose audit metadata for status changes, including actor and timestamp.
+
+## Why
+Operations and risk stakeholders need servicing order status changes to be attributable and traceable.
+
+## Context
+Status updates are key operational actions and must be logged and persisted with enough metadata for audit and support.
+
+## In Scope
+- Store actor identity for each status change
+- Store timestamp for each status change
+- Make audit metadata retrievable for authorised internal use
+
+## Out of Scope
+- Customer-visible audit history
+- Advanced reporting and analytics
+
+## Requirements
+- Every status update stores actor identity
+- Every status update stores timestamp
+
+## Acceptance Criteria
+- [ ] Every status update stores actor identity
+- [ ] Every status update stores timestamp
+- [ ] Audit metadata is retrievable for authorised internal use
+
+## Validation
+### Automated
+- [ ] Persistence tests confirm actor and timestamp are stored for status changes
+- [ ] Read tests confirm metadata remains available to authorised internal consumers
+
+### Manual
+- [ ] Update a request status as a CSR and verify actor and timestamp are recorded
+
+## Dependencies
+- API-004
+
+## Risks / Controls
+- Risk: Missing metadata weakens audit posture
+  - Control: Make audit capture part of the update transaction
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,SEC,
+SEC-004: Persist and expose audit metadata for internal note creation,"## Import Metadata
+- Issue key: `SEC-004`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `SEC`
+- Priority: High
+- Blocked by: API-004
+- Blocks: None
+- Source file: `project/linear/tickets/SEC-004_capture-audit-metadata-for-internal-notes.md`
+
+---
+## Summary
+Persist and expose audit metadata for internal note creation.
+
+## Why
+Internal notes need clear authorship and timing for operational continuity and audit.
+
+## Context
+Notes are operational artefacts and should be attributable in the same way as status changes.
+
+## In Scope
+- Store author for each note
+- Store timestamp for each note
+- Preserve note metadata across reads
+
+## Out of Scope
+- Customer-visible note metadata
+- Advanced note editing or redaction workflows
+
+## Requirements
+- Every note stores author
+- Every note stores timestamp
+
+## Acceptance Criteria
+- [ ] Every note stores author
+- [ ] Every note stores timestamp
+- [ ] Metadata is preserved across reads
+
+## Validation
+### Automated
+- [ ] Persistence tests confirm note author and timestamp are stored
+- [ ] Read tests confirm metadata remains intact across retrievals
+
+### Manual
+- [ ] Add a note and confirm author and timestamp are visible in staff context
+
+## Dependencies
+- API-004
+
+## Risks / Controls
+- Risk: Notes without metadata reduce usefulness and trust
+  - Control: Make note metadata mandatory
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,SEC,
+SEC-005: Implement explicit controls so the system cannot auto-complete servicing orders or auto-apply profile changes without CSR action,"## Import Metadata
+- Issue key: `SEC-005`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `SEC`
+- Priority: High
+- Blocked by: API-001, API-004
+- Blocks: CSR-009, CSR-014, QA-005
+- Source file: `project/linear/tickets/SEC-005_block-automated-completion-and-downstream-auto-fulfilment-paths.md`
+
+---
+## Summary
+Implement explicit controls so the system cannot auto-complete servicing orders or auto-apply profile changes without CSR action.
+
+## Why
+This enforces the single most important control requirement in the project.
+
+## Context
+The portal is a workflow tracker for manual servicing. It must not automatically complete requests or trigger downstream customer profile updates.
+
+## In Scope
+- Prevent auto-completion of servicing orders
+- Prevent automatic downstream profile update triggers from portal actions
+- Provide test evidence that no straight-through processing path exists
+
+## Out of Scope
+- Future controlled fulfilment integration after policy change
+- Operational activity outside the portal
+
+## Requirements
+- New requests remain in `Pending` until CSR action
+- No automatic transition to `Completed`
+- No automated downstream profile update occurs from this portal
+
+## Acceptance Criteria
+- [ ] New requests remain in `Pending` until CSR action
+- [ ] No automatic transition to `Completed`
+- [ ] No automated downstream profile update occurs from this portal
+- [ ] Business rule is verified in test evidence
+
+## Validation
+### Automated
+- [ ] End-to-end tests confirm submission alone does not complete a request
+- [ ] Integration tests confirm portal actions do not call downstream fulfilment paths
+
+### Manual
+- [ ] Submit a request and confirm it remains pending until a CSR acts
+- [ ] Verify no downstream profile change occurs from submission or status update alone
+
+## Dependencies
+- API-001
+- API-004
+
+## Risks / Controls
+- Risk: Hidden integrations may create accidental straight-through processing
+  - Control: Review boundaries explicitly and test for absence of auto-fulfilment
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,SEC,
+"SEC-006: Add logging for important security and workflow events, including failed access attempts and request lifecycle actions","## Import Metadata
+- Issue key: `SEC-006`
+- Project: Service Request Portal MVP
+- Milestone: Foundation
+- Domain label: `SEC`
+- Priority: High
+- Blocked by: API-001, API-003, API-004
+- Blocks: None
+- Source file: `project/linear/tickets/SEC-006_add-operational-logging-for-access-denials-and-key-workflow-events.md`
+
+---
+## Summary
+Add logging for important security and workflow events, including failed access attempts and request lifecycle actions.
+
+## Why
+Support, security, and operations teams need observable records of important events and failures.
+
+## Context
+Key events include request creation, status updates, note additions, and access denials.
+
+## In Scope
+- Log access denials
+- Log request initiation events
+- Log status update events
+- Log internal note events
+
+## Out of Scope
+- Full analytics pipeline implementation
+- Customer-visible event history
+
+## Requirements
+- Logs must be accessible to authorised operational support
+- Logging must not expose sensitive data unnecessarily
+
+## Acceptance Criteria
+- [ ] Access denials are logged
+- [ ] Request initiation events are logged
+- [ ] Status update events are logged
+- [ ] Internal note events are logged
+- [ ] Logs are accessible to authorised operational support
+
+## Validation
+### Automated
+- [ ] Observability tests confirm log emission for each event type
+- [ ] Security review confirms logged fields are appropriate
+
+### Manual
+- [ ] Trigger representative events and verify logs are present and usable
+
+## Dependencies
+- API-001
+- API-003
+- API-004
+
+## Risks / Controls
+- Risk: Over-logging may expose sensitive data
+  - Control: Define approved log fields and review them explicitly
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,SEC,
+CP-005: Create a customer form for submitting an address change request,"## Import Metadata
+- Issue key: `CP-005`
+- Project: Service Request Portal MVP
+- Milestone: Customer Submission
+- Domain label: `CP`
+- Priority: High
+- Blocked by: CP-004, API-001
+- Blocks: CP-008
+- Source file: `project/linear/tickets/CP-005_build-address-update-request-form.md`
+
+---
+## Summary
+Create a customer form for submitting an address change request.
+
+## Why
+Customers need a simple way to request an address update without directly changing bank master records.
+
+## Context
+The form must show the current address and accept the requested new address, creating a manual servicing request rather than an automatic change.
+
+## In Scope
+- Display the current address clearly
+- Allow entry of a requested new address
+- Validate required address fields before submission
+
+## Out of Scope
+- Automatic address updates to downstream systems
+- Document upload for proof of address
+
+## Requirements
+- The request is a ticket for manual CSR review only
+- The form must display current versus requested new value clearly
+
+## Acceptance Criteria
+- [ ] Current address is pre-filled or displayed clearly
+- [ ] Customer can enter a new address
+- [ ] Form validation prevents empty submission
+- [ ] Submission triggers servicing order creation with request type `Address Update`
+
+## Validation
+### Automated
+- [ ] Form validation tests cover empty and malformed submissions
+- [ ] Integration test confirms request type `Address Update` is sent to the API
+
+### Manual
+- [ ] Open the address form and confirm the current address is shown
+- [ ] Submit a valid new address and confirm the request proceeds
+
+## Dependencies
+- CP-004
+- API-001
+
+## Risks / Controls
+- Risk: Users may assume the address is updated immediately
+  - Control: Use clear UI wording that the request will be reviewed manually
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CP,
+CP-006: Create a customer form for submitting a phone number change request,"## Import Metadata
+- Issue key: `CP-006`
+- Project: Service Request Portal MVP
+- Milestone: Customer Submission
+- Domain label: `CP`
+- Priority: High
+- Blocked by: CP-004, API-001
+- Blocks: CP-008
+- Source file: `project/linear/tickets/CP-006_build-phone-number-update-request-form.md`
+
+---
+## Summary
+Create a customer form for submitting a phone number change request.
+
+## Why
+Customers need a controlled way to request phone number updates through the manual servicing workflow.
+
+## Context
+The form must show the current phone number and allow the user to request a new number, without altering records directly.
+
+## In Scope
+- Display the current phone number clearly
+- Allow entry of a requested new phone number
+- Validate phone format and required fields before submission
+
+## Out of Scope
+- Automatic phone number updates to downstream systems
+- Support for non-MVP request types
+
+## Requirements
+- The request remains subject to manual CSR review
+- The form must show current and requested values clearly
+
+## Acceptance Criteria
+- [ ] Current phone number is pre-filled or displayed clearly
+- [ ] Customer can enter a new phone number
+- [ ] Form validation prevents invalid or empty submission
+- [ ] Submission triggers servicing order creation with request type `Phone Update`
+
+## Validation
+### Automated
+- [ ] Validation tests cover missing and malformed phone input
+- [ ] Integration test confirms request type `Phone Update` is sent to the API
+
+### Manual
+- [ ] Open the phone update form and confirm the current phone number is shown
+- [ ] Submit a valid new phone number and confirm the request proceeds
+
+## Dependencies
+- CP-004
+- API-001
+
+## Risks / Controls
+- Risk: Input rules may reject valid formats unexpectedly
+  - Control: Define accepted phone formatting rules and test representative examples
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CP,
+CP-007: Create a customer form for submitting an email address change request,"## Import Metadata
+- Issue key: `CP-007`
+- Project: Service Request Portal MVP
+- Milestone: Customer Submission
+- Domain label: `CP`
+- Priority: High
+- Blocked by: CP-004, API-001
+- Blocks: CP-008
+- Source file: `project/linear/tickets/CP-007_build-email-address-update-request-form.md`
+
+---
+## Summary
+Create a customer form for submitting an email address change request.
+
+## Why
+Customers need a secure and straightforward way to request email updates while preserving manual review controls.
+
+## Context
+The form must show the current email address and allow a new requested email to be entered for CSR review.
+
+## In Scope
+- Display the current email address clearly
+- Allow entry of a requested new email address
+- Validate email format and required fields before submission
+
+## Out of Scope
+- Automatic email address changes in downstream systems
+- Email verification flows beyond the service request process
+
+## Requirements
+- The request is submitted for manual review only
+- The form must show current versus requested values clearly
+
+## Acceptance Criteria
+- [ ] Current email is pre-filled or displayed clearly
+- [ ] Customer can enter a new email address
+- [ ] Form validation prevents invalid or empty submission
+- [ ] Submission triggers servicing order creation with request type `Email Update`
+
+## Validation
+### Automated
+- [ ] Validation tests cover empty and malformed email submissions
+- [ ] Integration test confirms request type `Email Update` is sent to the API
+
+### Manual
+- [ ] Open the email form and confirm the current email is shown
+- [ ] Submit a valid new email and confirm the request proceeds
+
+## Dependencies
+- CP-004
+- API-001
+
+## Risks / Controls
+- Risk: Customers may expect immediate confirmation of the new email as active
+  - Control: Use UI wording that the request is pending manual review
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CP,
+CP-011: Create a detail page where a customer can view the information and status for a single servicing order,"## Import Metadata
+- Issue key: `CP-011`
+- Project: Service Request Portal MVP
+- Milestone: Customer Tracking & Controls
+- Domain label: `CP`
+- Priority: High
+- Blocked by: CP-010, API-003
+- Blocks: CP-012, QA-002, QA-003, SEC-002
+- Source file: `project/linear/tickets/CP-011_build-customer-request-detail-page.md`
+
+---
+## Summary
+Create a detail page where a customer can view the information and status for a single servicing order.
+
+## Why
+Customers need to confirm the exact change they requested and see the current workflow state.
+
+## Context
+The page should show request type, dates, request details, and current status, but must never show internal notes.
+
+## In Scope
+- Display request type, dates, request details, and status
+- Load detail by servicing order ID in customer context
+- Hide internal notes and staff-only fields
+
+## Out of Scope
+- CSR-only controls such as status update or note entry
+- Customer-visible rejection reasoning unless added later
+
+## Requirements
+- Only the authenticated customer’s own request may be retrieved
+- Customer-facing responses must exclude internal notes
+
+## Acceptance Criteria
+- [ ] Detail page displays request type
+- [ ] Detail page displays submitted and last updated dates
+- [ ] Detail page displays request details
+- [ ] Detail page displays current status
+- [ ] Internal notes are not shown
+
+## Validation
+### Automated
+- [ ] Response-shaping tests confirm internal notes are omitted in customer context
+- [ ] UI tests cover detail rendering for supported request types
+
+### Manual
+- [ ] Open a request detail page as the owning customer and confirm displayed fields
+- [ ] Inspect the view and confirm no internal notes are exposed
+
+## Dependencies
+- CP-010
+- API-003
+
+## Risks / Controls
+- Risk: API parity with CSR detail may accidentally expose staff-only data
+  - Control: Separate customer and CSR response shaping explicitly
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CP,
+CSR-004: Allow CSR users to filter the queue by servicing order status,"## Import Metadata
+- Issue key: `CSR-004`
+- Project: Service Request Portal MVP
+- Milestone: CSR Processing
+- Domain label: `CSR`
+- Priority: High
+- Blocked by: CSR-003
+- Blocks: None
+- Source file: `project/linear/tickets/CSR-004_add-status-filter-to-csr-work-queue.md`
+
+---
+## Summary
+Allow CSR users to filter the queue by servicing order status.
+
+## Why
+CSRs need to narrow the queue to the work items most relevant to the task at hand.
+
+## Context
+The queue should support filtering by statuses such as `Pending`, `In Progress`, `Completed`, and `Rejected`.
+
+## In Scope
+- Add status filter control to the CSR queue
+- Apply filter to queue results
+- Support clear or reset filter behaviour
+
+## Out of Scope
+- Advanced multi-filter analytics
+- Customer-facing status filtering
+
+## Requirements
+- Filtering must return only matching requests
+- Only supported status values may be selectable
+
+## Acceptance Criteria
+- [ ] CSR can filter by supported status values
+- [ ] Filtered list returns only matching requests
+- [ ] Clear filter or reset behaviour is supported
+
+## Validation
+### Automated
+- [ ] UI tests cover filter selection and result updates
+- [ ] API or integration tests cover status-based queue retrieval
+
+### Manual
+- [ ] Apply each status filter and confirm the queue results are correct
+- [ ] Clear the filter and confirm the full queue returns
+
+## Dependencies
+- CSR-003
+
+## Risks / Controls
+- Risk: Client-side filtering may diverge from server data
+  - Control: Prefer server-backed filtering where practical
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CSR,
+CSR-005: Enable CSR users to search the queue by customer name,"## Import Metadata
+- Issue key: `CSR-005`
+- Project: Service Request Portal MVP
+- Milestone: CSR Processing
+- Domain label: `CSR`
+- Priority: High
+- Blocked by: CSR-003
+- Blocks: None
+- Source file: `project/linear/tickets/CSR-005_add-search-by-customer-name-to-csr-work-queue.md`
+
+---
+## Summary
+Enable CSR users to search the queue by customer name.
+
+## Why
+CSRs need to locate specific customer requests quickly during servicing activity.
+
+## Context
+Customer name search should work within the central queue and return relevant matching servicing orders.
+
+## In Scope
+- Add customer name search control to the queue
+- Return matching requests accurately
+- Handle no-match state clearly
+
+## Out of Scope
+- Advanced fuzzy search tuning beyond MVP
+- Search across non-servicing entities
+
+## Requirements
+- Search must return accurate matches
+- Search must remain restricted to CSR-authorised users
+
+## Acceptance Criteria
+- [ ] CSR can enter customer name search text
+- [ ] Matching requests are returned accurately
+- [ ] No-match state is handled clearly
+
+## Validation
+### Automated
+- [ ] Search tests cover exact and partial supported matches
+- [ ] Authorisation tests confirm search is available only to CSR users
+
+### Manual
+- [ ] Search by customer name and confirm the expected requests are returned
+- [ ] Search for a non-existent name and confirm the no-match state
+
+## Dependencies
+- CSR-003
+
+## Risks / Controls
+- Risk: Overly broad matching may produce operational noise
+  - Control: Define a clear search matching rule and verify expected results
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CSR,
+CSR-006: Enable CSR users to search the queue by servicing order ID,"## Import Metadata
+- Issue key: `CSR-006`
+- Project: Service Request Portal MVP
+- Milestone: CSR Processing
+- Domain label: `CSR`
+- Priority: High
+- Blocked by: CSR-003
+- Blocks: None
+- Source file: `project/linear/tickets/CSR-006_add-search-by-servicing-order-id-to-csr-work-queue.md`
+
+---
+## Summary
+Enable CSR users to search the queue by servicing order ID.
+
+## Why
+CSRs need a precise way to locate a request when a reference has already been provided.
+
+## Context
+Servicing order ID search should return the exact matching request or a clear no-match state.
+
+## In Scope
+- Add servicing order ID search control to the queue
+- Return the exact matching request where present
+- Handle no-match state clearly
+
+## Out of Scope
+- Cross-entity search outside servicing orders
+- Customer-facing reference search
+
+## Requirements
+- Search must support exact or approved ID matching
+- Search remains restricted to CSR-authorised users
+
+## Acceptance Criteria
+- [ ] CSR can search by exact or supported servicing order ID match
+- [ ] Matching request is returned accurately
+- [ ] No-match state is handled clearly
+
+## Validation
+### Automated
+- [ ] Search tests cover exact matching by servicing order ID
+- [ ] No-match tests cover unknown IDs
+
+### Manual
+- [ ] Search for a known servicing order ID and confirm the expected request is returned
+- [ ] Search for an unknown ID and confirm the no-match state
+
+## Dependencies
+- CSR-003
+
+## Risks / Controls
+- Risk: Formatting differences may cause false no-match results
+  - Control: Normalise accepted ID input where appropriate
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CSR,
+CSR-007: Improve the CSR queue with pagination and sorting to support growing request volumes,"## Import Metadata
+- Issue key: `CSR-007`
+- Project: Service Request Portal MVP
+- Milestone: CSR Processing
+- Domain label: `CSR`
+- Priority: Medium
+- Blocked by: CSR-003, API-002
+- Blocks: None
+- Source file: `project/linear/tickets/CSR-007_add-queue-pagination-and-sorting.md`
+
+---
+## Summary
+Improve the CSR queue with pagination and sorting to support growing request volumes.
+
+## Why
+Operational queues need to remain usable as the number of requests increases.
+
+## Context
+This is a scalability and usability enhancement for the CSR queue rather than a core MVP workflow capability.
+
+## In Scope
+- Add pagination or incremental loading to the queue
+- Add sorting by submission date and or status
+- Keep queue interaction responsive with larger datasets
+
+## Out of Scope
+- Complex analytics or supervisor views
+- Changes to the servicing workflow itself
+
+## Requirements
+- Pagination and sorting must not change authorisation behaviour
+- Queue remains usable with larger request volumes
+
+## Acceptance Criteria
+- [ ] Queue supports pagination or incremental loading
+- [ ] Queue supports sorting by submission date and or status
+- [ ] Queue remains usable with larger request volumes
+
+## Validation
+### Automated
+- [ ] UI tests cover pagination controls and sorting behaviour
+- [ ] Integration tests cover paged queue retrieval
+
+### Manual
+- [ ] Load a queue with multiple pages of data and confirm navigation works
+- [ ] Apply sorting and confirm record order changes correctly
+
+## Dependencies
+- CSR-003
+- API-002
+
+## Risks / Controls
+- Risk: Pagination may mask records unexpectedly during triage
+  - Control: Provide clear paging state and sort order indicators
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",Medium,,CSR,
+CSR-008: Create a CSR detail view for a single servicing order with enough information to review and process it manually,"## Import Metadata
+- Issue key: `CSR-008`
+- Project: Service Request Portal MVP
+- Milestone: CSR Processing
+- Domain label: `CSR`
+- Priority: High
+- Blocked by: CSR-003, API-003
+- Blocks: CSR-009, CSR-011, QA-002, QA-004, SEC-002
+- Source file: `project/linear/tickets/CSR-008_build-csr-request-detail-page.md`
+
+---
+## Summary
+Create a CSR detail view for a single servicing order with enough information to review and process it manually.
+
+## Why
+CSRs need a complete view of the customer request, including old and requested new values, before taking action.
+
+## Context
+The CSR detail page is the operational surface for reviewing a request, adding notes, and changing status.
+
+## In Scope
+- Display customer information, request type, and request details
+- Show old versus new values clearly
+- Show request history and internal notes
+
+## Out of Scope
+- Customer-facing request detail
+- Supervisor-only workflow features
+
+## Requirements
+- Only authenticated CSR users can access the page
+- The page must show the information needed for manual review
+
+## Acceptance Criteria
+- [ ] Detail page shows customer information
+- [ ] Detail page shows request type
+- [ ] Detail page shows old and requested new values
+- [ ] Detail page shows request history
+- [ ] Detail page shows internal notes
+
+## Validation
+### Automated
+- [ ] UI tests cover rendering of supported request types and note history
+- [ ] Authorisation tests confirm only CSR users can access the page
+
+### Manual
+- [ ] Open a request as a CSR and confirm all expected fields are visible
+- [ ] Confirm the page distinguishes old versus requested new values clearly
+
+## Dependencies
+- CSR-003
+- API-003
+
+## Risks / Controls
+- Risk: Poor information layout may slow manual handling
+  - Control: Prioritise comparison of old and requested new values in the UI
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CSR,
+"QA-001: Build automated tests covering the servicing order API happy paths, negative paths, validation, and authorisation cases","## Import Metadata
+- Issue key: `QA-001`
+- Project: Service Request Portal MVP
+- Milestone: QA / UAT / Release
+- Domain label: `QA`
+- Priority: High
+- Blocked by: API-001, API-002, API-003, API-004, API-005
+- Blocks: QA-005
+- Source file: `project/linear/tickets/QA-001_create-automated-api-test-suite.md`
+
+---
+## Summary
+Build automated tests covering the servicing order API happy paths, negative paths, validation, and authorisation cases.
+
+## Why
+Reliable API test coverage reduces regression risk and supports confident release decisions.
+
+## Context
+The servicing order API underpins both portals, so its contracts and controls need broad automated coverage.
+
+## In Scope
+- Cover initiate, list, detail, and update endpoints
+- Cover validation failures and auth failures
+- Cover key workflow rules such as invalid status transitions
+
+## Out of Scope
+- UI end-to-end tests
+- Operational reporting validation
+
+## Requirements
+- All core API endpoints must be covered
+- Negative paths and authorisation paths must be tested
+
+## Acceptance Criteria
+- [ ] Initiate endpoint is covered
+- [ ] List endpoint is covered
+- [ ] Detail endpoint is covered
+- [ ] Update endpoint is covered
+- [ ] Validation and auth failures are covered
+
+## Validation
+### Automated
+- [ ] Implement the automated API suite itself
+
+### Manual
+- [ ] Review test reports and confirm coverage of required endpoints and failure classes
+
+## Dependencies
+- API-001
+- API-002
+- API-003
+- API-004
+- API-005
+
+## Risks / Controls
+- Risk: Gaps in API test coverage may hide control regressions
+  - Control: Make the suite part of release gating
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,QA,
+"QA-006: Define reporting needs such as queue ageing, counts by status, and operational throughput for later implementation","## Import Metadata
+- Issue key: `QA-006`
+- Project: Service Request Portal MVP
+- Milestone: QA / UAT / Release
+- Domain label: `QA`
+- Priority: Medium
+- Blocked by: CSR-003, API-002
+- Blocks: None
+- Source file: `project/linear/tickets/QA-006_add-operational-reporting-dashboard-requirements.md`
+
+---
+## Summary
+Define reporting needs such as queue ageing, counts by status, and operational throughput for later implementation.
+
+## Why
+Future operational reporting will help service leaders manage workload and identify bottlenecks.
+
+## Context
+This issue is about documenting requirements rather than building reporting dashboards in MVP.
+
+## In Scope
+- Identify key operational measures
+- Document queue ageing and status reporting needs
+- Define the later implementation scope for reporting
+
+## Out of Scope
+- Building the reporting dashboards themselves
+- Changes to current operational workflow
+
+## Requirements
+- Reporting needs must be captured clearly for future delivery
+
+## Acceptance Criteria
+- [ ] Reporting requirements documented
+- [ ] Key measures identified
+- [ ] Future implementation scope defined
+
+## Validation
+### Automated
+- [ ] N/A for this documentation task
+
+### Manual
+- [ ] Review documented requirements with operations and product stakeholders
+
+## Dependencies
+- CSR-003
+- API-002
+
+## Risks / Controls
+- Risk: Reporting scope may sprawl without a clear first cut
+  - Control: Document a concise initial measure set
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",Medium,,QA,
+CP-008: Connect customer request forms to the servicing order initiate API so valid submissions create servicing orders,"## Import Metadata
+- Issue key: `CP-008`
+- Project: Service Request Portal MVP
+- Milestone: Customer Submission
+- Domain label: `CP`
+- Priority: High
+- Blocked by: CP-005, CP-006, CP-007, API-001
+- Blocks: CP-009, QA-002, QA-003
+- Source file: `project/linear/tickets/CP-008_integrate-customer-request-submission-with-servicing-order-initiate-api.md`
+
+---
+## Summary
+Connect customer request forms to the servicing order initiate API so valid submissions create servicing orders.
+
+## Why
+This is the core integration that turns customer input into trackable servicing orders.
+
+## Context
+Address, phone, and email update forms all rely on `POST /ServicingOrder/Initiate` to create a request with initial status `Pending`.
+
+## In Scope
+- Call the initiate API from each customer request form
+- Handle successful and failed API responses
+- Return the created servicing order reference to the UI
+
+## Out of Scope
+- Direct updates to downstream profile systems
+- CSR status updates
+
+## Requirements
+- Successful submission creates a servicing order
+- Errors must be surfaced clearly to the customer
+- Created requests must enter the manual workflow with status `Pending`
+
+## Acceptance Criteria
+- [ ] Form submission calls the initiate API
+- [ ] Successful response returns a servicing order ID
+- [ ] Unsuccessful responses show an appropriate error state
+- [ ] Created request appears in customer request history
+
+## Validation
+### Automated
+- [ ] Integration tests cover successful submission from each request type
+- [ ] Error handling tests cover API validation and failure responses
+
+### Manual
+- [ ] Submit each request type and confirm a servicing order is created
+- [ ] Trigger an API validation failure and confirm the UI displays an error
+
+## Dependencies
+- CP-005
+- CP-006
+- CP-007
+- API-001
+
+## Risks / Controls
+- Risk: Requests may be submitted without enough feedback to the customer
+  - Control: Show confirmation state with reference and initial status
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CP,
+CSR-009: Enable CSRs to update servicing order status through the CSR portal in line with the approved manual workflow,"## Import Metadata
+- Issue key: `CSR-009`
+- Project: Service Request Portal MVP
+- Milestone: CSR Processing
+- Domain label: `CSR`
+- Priority: High
+- Blocked by: CSR-008, API-004, SEC-003, SEC-005
+- Blocks: CP-012, CSR-010, CSR-013, CSR-014, QA-002, QA-004
+- Source file: `project/linear/tickets/CSR-009_add-csr-status-update-control.md`
+
+---
+## Summary
+Enable CSRs to update servicing order status through the CSR portal in line with the approved manual workflow.
+
+## Why
+This allows CSRs to accurately track manual progress and gives customers visibility of where their request sits in the process.
+
+## Context
+The approved workflow supports `Pending` → `In Progress`, and `In Progress` → `Completed` or `Rejected`. Status updates depend on the servicing order update API and server-side workflow validation.
+
+## In Scope
+- Add a status update control to the CSR request detail screen
+- Allow CSR users to select a valid next status
+- Submit status changes through the update API
+- Refresh the UI after successful update
+- Display the updated status in detail and queue views
+- Handle API validation and error responses in the UI
+
+## Out of Scope
+- Changing status from the customer portal
+- New status values outside the approved MVP set
+- Automatically applying customer profile changes to downstream systems
+- Structured rejection reasons in this issue
+
+## Requirements
+- Only authenticated CSR users can update request status
+- Status changes must use the servicing order update API
+- Only valid transitions are allowed
+- Updated status must persist and be visible on subsequent retrieval
+- Updating status must not trigger straight-through processing or downstream auto-fulfilment
+- Status changes must be attributable for audit purposes
+
+## Acceptance Criteria
+- [ ] A CSR can update a request from `Pending` to `In Progress` from the CSR detail screen
+- [ ] A CSR can update a request from `In Progress` to `Completed`
+- [ ] A CSR can update a request from `In Progress` to `Rejected`
+- [ ] After a successful update, the new status is shown in the CSR detail view
+- [ ] After a successful update, the new status is shown in the CSR queue view
+- [ ] Invalid transitions are blocked and an appropriate error is shown
+- [ ] Non-CSR users cannot access or use the status update control
+- [ ] Updating status does not automatically apply the customer change to downstream systems
+
+## Validation
+### Automated
+- [ ] API integration test covers valid status update from `Pending` to `In Progress`
+- [ ] API integration test covers valid status update from `In Progress` to `Completed`
+- [ ] API integration test covers invalid transition rejection
+- [ ] Authorisation test confirms non-CSR user cannot update status
+- [ ] UI integration test confirms updated status is rendered after successful response
+
+### Manual
+- [ ] Log in as CSR and update a `Pending` request to `In Progress`
+- [ ] Confirm updated status appears in CSR detail and queue views
+- [ ] Attempt invalid transition and confirm error behaviour
+- [ ] Confirm customer channel shows updated status but no internal-only workflow controls
+- [ ] Confirm no downstream profile update is automatically triggered by status change
+
+## Dependencies
+- CSR-008
+- API-004
+- CSR-010
+- SEC-003
+- SEC-005
+
+## Risks / Controls
+- Risk: Invalid transitions may be allowed in the UI or backend
+  - Control: Enforce transition rules server-side and test negative paths
+- Risk: Status change may be mistaken for fulfilment completion
+  - Control: Explicitly separate workflow status tracking from downstream fulfilment
+- Risk: Unauthorised users may gain access to CSR controls
+  - Control: Enforce role-based access in both frontend and backend
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CSR,
+CSR-011: Allow CSR users to add staff-only notes to a servicing order,"## Import Metadata
+- Issue key: `CSR-011`
+- Project: Service Request Portal MVP
+- Milestone: CSR Processing
+- Domain label: `CSR`
+- Priority: High
+- Blocked by: CSR-008, API-004
+- Blocks: CSR-012, CSR-013, QA-002, QA-004
+- Source file: `project/linear/tickets/CSR-011_add-csr-internal-note-entry.md`
+
+---
+## Summary
+Allow CSR users to add staff-only notes to a servicing order.
+
+## Why
+CSRs need a way to record internal servicing context and operational actions without exposing it to customers.
+
+## Context
+Internal notes are part of the servicing order record and must be visible to staff but never to customers.
+
+## In Scope
+- Provide note entry control in the CSR detail page
+- Save internal note text to the servicing order
+- Display saved notes in CSR context
+
+## Out of Scope
+- Customer-visible notes
+- Structured rejection reasons in this issue
+
+## Requirements
+- Notes are staff-only
+- Notes must be associated with the servicing order and retained in history
+
+## Acceptance Criteria
+- [ ] CSR can enter internal note text
+- [ ] Note can be saved successfully
+- [ ] Saved note appears in CSR detail view
+- [ ] Note does not appear in customer view
+
+## Validation
+### Automated
+- [ ] API tests cover note append behaviour
+- [ ] Response-shaping tests confirm notes are excluded from customer responses
+
+### Manual
+- [ ] Add an internal note as a CSR and confirm it appears in staff view
+- [ ] Open the same request in customer view and confirm the note is not visible
+
+## Dependencies
+- CSR-008
+- API-004
+
+## Risks / Controls
+- Risk: Staff-only notes may leak through shared payloads
+  - Control: Separate customer and CSR response shaping and test both
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CSR,
+SEC-002: Ensure internal notes and other staff-only data are excluded from customer-facing API responses and UI views,"## Import Metadata
+- Issue key: `SEC-002`
+- Project: Service Request Portal MVP
+- Milestone: Customer Tracking & Controls
+- Domain label: `SEC`
+- Priority: High
+- Blocked by: API-003, CP-011, CSR-008
+- Blocks: None
+- Source file: `project/linear/tickets/SEC-002_suppress-internal-notes-from-customer-facing-payloads.md`
+
+---
+## Summary
+Ensure internal notes and other staff-only data are excluded from customer-facing API responses and UI views.
+
+## Why
+Internal notes are for staff operations only and must not be visible to customers.
+
+## Context
+The same servicing order can be viewed by customers and CSRs, but only CSR contexts may receive internal notes.
+
+## In Scope
+- Exclude internal notes from customer API responses
+- Ensure customer UI renders no internal notes
+- Preserve note visibility in CSR contexts
+
+## Out of Scope
+- Broader data-classification work outside servicing orders
+- Changing CSR note visibility
+
+## Requirements
+- Customer-facing responses omit internal notes
+- CSR-facing responses continue to include internal notes where authorised
+
+## Acceptance Criteria
+- [ ] Customer API response omits internal notes
+- [ ] Customer UI renders no internal notes
+- [ ] CSR UI still renders internal notes correctly
+
+## Validation
+### Automated
+- [ ] Response-shaping tests confirm omission in customer context and inclusion in CSR context
+- [ ] UI regression tests confirm customer views do not render notes
+
+### Manual
+- [ ] Open the same request in customer and CSR contexts and compare visible fields
+
+## Dependencies
+- API-003
+- CP-011
+- CSR-008
+
+## Risks / Controls
+- Risk: Shared DTOs or serializers may leak note data
+  - Control: Use explicit role-specific response mapping
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,SEC,
+CP-009: Display a clear confirmation state after a customer successfully submits a servicing request,"## Import Metadata
+- Issue key: `CP-009`
+- Project: Service Request Portal MVP
+- Milestone: Customer Submission
+- Domain label: `CP`
+- Priority: High
+- Blocked by: CP-008
+- Blocks: None
+- Source file: `project/linear/tickets/CP-009_show-request-submission-confirmation-to-customer.md`
+
+---
+## Summary
+Display a clear confirmation state after a customer successfully submits a servicing request.
+
+## Why
+Customers need confidence that their request has been received and entered the workflow.
+
+## Context
+After a successful initiate API call, the portal should show a reference and the initial status so the customer can track it later.
+
+## In Scope
+- Show success confirmation after valid submission
+- Display servicing order ID and initial status
+- Provide navigation to request history or detail
+
+## Out of Scope
+- Outbound notifications
+- Expanded workflow timeline beyond initial confirmation
+
+## Requirements
+- Confirmation must only display after a successful API response
+- Initial status should be shown as `Pending`
+
+## Acceptance Criteria
+- [ ] Success message shown after valid submission
+- [ ] Servicing order ID displayed
+- [ ] Initial status displayed as `Pending`
+- [ ] Customer can navigate to request history or request detail
+
+## Validation
+### Automated
+- [ ] UI tests cover confirmation rendering after successful submission
+- [ ] Integration tests confirm reference and status values are shown from the API response
+
+### Manual
+- [ ] Submit a valid request and confirm the success state displays correctly
+- [ ] Use the confirmation links to navigate to request history or detail
+
+## Dependencies
+- CP-008
+
+## Risks / Controls
+- Risk: Weak confirmation may drive avoidable contact centre follow-up
+  - Control: Provide a prominent reference and clear next step
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CP,
+CP-012: Ensure the customer portal reflects CSR status changes in real time or near real time,"## Import Metadata
+- Issue key: `CP-012`
+- Project: Service Request Portal MVP
+- Milestone: Customer Tracking & Controls
+- Domain label: `CP`
+- Priority: High
+- Blocked by: CP-010, CP-011, CSR-009, API-004
+- Blocks: None
+- Source file: `project/linear/tickets/CP-012_refresh-customer-visible-status-after-csr-updates.md`
+
+---
+## Summary
+Ensure the customer portal reflects CSR status changes in real time or near real time.
+
+## Why
+Customers need trustworthy visibility of progress without contacting staff for status updates.
+
+## Context
+When a CSR changes a request to `In Progress`, `Completed`, or `Rejected`, the customer portal should show the updated status after refresh or near-real-time update.
+
+## In Scope
+- Refresh request history and detail status after CSR updates
+- Implement polling, refresh, or another approved update mechanism
+- Minimise stale status behaviour and document expected behaviour
+
+## Out of Scope
+- Outbound notifications
+- Customer-visible internal workflow controls
+
+## Requirements
+- CSR updates must be reflected in customer-visible status
+- Status updates must not expose internal notes or staff-only data
+
+## Acceptance Criteria
+- [ ] Customer sees updated request status after CSR action
+- [ ] Updated status appears without manual support intervention
+- [ ] Stale status behaviour is minimised and documented
+
+## Validation
+### Automated
+- [ ] Integration tests cover status propagation from CSR update to customer views
+- [ ] UI tests confirm updated status renders in history and detail views
+
+### Manual
+- [ ] Update a request as a CSR and confirm the customer view reflects the new status
+- [ ] Confirm no additional staff-only fields become visible during refresh
+
+## Dependencies
+- CP-010
+- CP-011
+- CSR-009
+- API-004
+
+## Risks / Controls
+- Risk: Status may appear stale and undermine trust
+  - Control: Set a clear refresh strategy and verify it in testing
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CP,
+CSR-010: Implement workflow rules so invalid servicing order status transitions are blocked,"## Import Metadata
+- Issue key: `CSR-010`
+- Project: Service Request Portal MVP
+- Milestone: CSR Processing
+- Domain label: `CSR`
+- Priority: High
+- Blocked by: CSR-009, API-004
+- Blocks: None
+- Source file: `project/linear/tickets/CSR-010_enforce-valid-status-transitions.md`
+
+---
+## Summary
+Implement workflow rules so invalid servicing order status transitions are blocked.
+
+## Why
+Controlled status transitions protect operational integrity and stop users from bypassing required manual workflow steps.
+
+## Context
+The MVP workflow permits `Pending` → `In Progress`, and `In Progress` → `Completed` or `Rejected`. Transitions such as `Pending` → `Completed` must be rejected.
+
+## In Scope
+- Define valid servicing order transitions
+- Reject invalid transitions at the API and service layer
+- Return clear error responses for invalid transition attempts
+
+## Out of Scope
+- New status values beyond the approved MVP set
+- Supervisor override behaviour
+
+## Requirements
+- Server-side validation is mandatory even if the UI hides invalid options
+- Invalid transitions must not persist
+
+## Acceptance Criteria
+- [ ] `Pending` to `Completed` is rejected
+- [ ] `Pending` to `Rejected` is rejected unless explicitly allowed later
+- [ ] Invalid transitions return a clear error
+- [ ] Valid transitions succeed
+
+## Validation
+### Automated
+- [ ] Contract tests cover all valid and invalid transition paths
+- [ ] Error response tests confirm invalid transitions return the expected status code and payload
+
+### Manual
+- [ ] Attempt an invalid transition through the UI and confirm it is blocked
+- [ ] Attempt each valid transition and confirm it succeeds
+
+## Dependencies
+- CSR-009
+- API-004
+
+## Risks / Controls
+- Risk: UI-only validation could be bypassed
+  - Control: Enforce workflow rules on the backend
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CSR,
+CSR-012: Ensure internal notes are saved with authorship and timestamp metadata for auditability,"## Import Metadata
+- Issue key: `CSR-012`
+- Project: Service Request Portal MVP
+- Milestone: CSR Processing
+- Domain label: `CSR`
+- Priority: High
+- Blocked by: CSR-011, API-004
+- Blocks: None
+- Source file: `project/linear/tickets/CSR-012_persist-internal-notes-with-author-and-timestamp.md`
+
+---
+## Summary
+Ensure internal notes are saved with authorship and timestamp metadata for auditability.
+
+## Why
+Operations and control stakeholders need note history to be attributable and time-sequenced.
+
+## Context
+A free-text note without author and time metadata is not sufficient for audit and operational traceability.
+
+## In Scope
+- Store note author with each internal note
+- Store note timestamp with each internal note
+- Return note history in a deterministic order for CSR users
+
+## Out of Scope
+- Customer-visible note history
+- Advanced note editing or deletion workflows
+
+## Requirements
+- Every note must include author and timestamp
+- Metadata must persist across reads
+
+## Acceptance Criteria
+- [ ] Every note includes author
+- [ ] Every note includes timestamp
+- [ ] Note ordering is deterministic and visible in CSR context
+
+## Validation
+### Automated
+- [ ] Persistence tests confirm author and timestamp are stored for each note
+- [ ] Read tests confirm note ordering is consistent
+
+### Manual
+- [ ] Add multiple notes and confirm author and timestamp are visible in the expected order
+
+## Dependencies
+- CSR-011
+- API-004
+
+## Risks / Controls
+- Risk: Missing metadata weakens auditability
+  - Control: Make author and timestamp mandatory at persistence time
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CSR,
+CSR-013: Support a structured rejection reason in addition to or instead of a free-text internal note for rejected requests,"## Import Metadata
+- Issue key: `CSR-013`
+- Project: Service Request Portal MVP
+- Milestone: CSR Processing
+- Domain label: `CSR`
+- Priority: Medium
+- Blocked by: CSR-009, CSR-011, API-004
+- Blocks: None
+- Source file: `project/linear/tickets/CSR-013_add-optional-rejection-reason-field.md`
+
+---
+## Summary
+Support a structured rejection reason in addition to or instead of a free-text internal note for rejected requests.
+
+## Why
+A structured rejection reason can improve consistency in rejected request handling and later customer communications if adopted.
+
+## Context
+This is a post-MVP usability and data-quality enhancement. Exposure rules for any customer-facing use must be defined before release.
+
+## In Scope
+- Add an optional rejection reason input for rejected requests
+- Store the rejection reason when supplied
+- Define where the rejection reason is shown in staff context
+
+## Out of Scope
+- Automatic customer notifications
+- Customer-visible rejection reason without explicit design approval
+
+## Requirements
+- Rejection reason is optional
+- Customer visibility rules must be explicitly defined before exposure outside staff context
+
+## Acceptance Criteria
+- [ ] CSR can optionally supply a rejection reason
+- [ ] Rejection reason is stored when provided
+- [ ] Exposure rules for customer visibility are defined before release
+
+## Validation
+### Automated
+- [ ] Tests cover storing a rejection reason and leaving it empty
+- [ ] Response-shaping tests confirm visibility rules are enforced
+
+### Manual
+- [ ] Reject a request with and without a rejection reason and confirm behaviour
+
+## Dependencies
+- CSR-009
+- CSR-011
+- API-004
+
+## Risks / Controls
+- Risk: Rejection reasons may be exposed before policy is agreed
+  - Control: Keep them staff-only until explicit approval
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",Medium,,CSR,
+CSR-014: Implement controls ensuring the portal supports manual processing only and does not auto-fulfil customer changes,"## Import Metadata
+- Issue key: `CSR-014`
+- Project: Service Request Portal MVP
+- Milestone: CSR Processing
+- Domain label: `CSR`
+- Priority: High
+- Blocked by: CSR-009, API-004, SEC-005
+- Blocks: None
+- Source file: `project/linear/tickets/CSR-014_enforce-manual-processing-only-across-csr-workflow.md`
+
+---
+## Summary
+Implement controls ensuring the portal supports manual processing only and does not auto-fulfil customer changes.
+
+## Why
+This enforces the project’s central business rule and avoids accidental straight-through processing.
+
+## Context
+The portal is a workflow and tracking layer. It must not automatically apply address, phone, or email changes to downstream systems.
+
+## In Scope
+- Ensure requests remain in manual workflow states until CSR action
+- Block automatic completion behaviour
+- Prevent automatic downstream profile update triggers from this portal
+
+## Out of Scope
+- Post-approval downstream integration
+- Any straight-through processing path
+
+## Requirements
+- No request is auto-completed upon submission
+- No request automatically updates downstream customer master data
+- Manual workflow remains explicit and testable
+
+## Acceptance Criteria
+- [ ] No request is auto-completed upon submission
+- [ ] No request triggers downstream profile update automatically
+- [ ] Workflow remains in manual states until CSR action occurs
+
+## Validation
+### Automated
+- [ ] End-to-end tests confirm submission alone does not complete a request
+- [ ] Integration tests confirm no downstream fulfilment path is triggered by portal actions
+
+### Manual
+- [ ] Submit a request and confirm it remains pending until CSR action
+- [ ] Verify no downstream profile data changes occur from portal submission alone
+
+## Dependencies
+- CSR-009
+- API-004
+- SEC-005
+
+## Risks / Controls
+- Risk: Implicit integrations may introduce accidental fulfilment
+  - Control: Review integration boundaries and test for absence of auto-processing
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,CSR,
+QA-002: Build integration or end-to-end tests for customer and CSR journeys across the portal,"## Import Metadata
+- Issue key: `QA-002`
+- Project: Service Request Portal MVP
+- Milestone: QA / UAT / Release
+- Domain label: `QA`
+- Priority: High
+- Blocked by: CP-008, CP-010, CP-011, CSR-003, CSR-008, CSR-009, CSR-011
+- Blocks: QA-005
+- Source file: `project/linear/tickets/QA-002_create-portal-integration-test-suite.md`
+
+---
+## Summary
+Build integration or end-to-end tests for customer and CSR journeys across the portal.
+
+## Why
+Portal-level tests confirm the UI and API work together for the main user journeys.
+
+## Context
+The suite should cover login, request submission, queue handling, detail views, status updates, and note workflows.
+
+## In Scope
+- Cover customer login and request submission flows
+- Cover customer history and detail views
+- Cover CSR queue, filter, search, detail, status update, and note flows
+
+## Out of Scope
+- Broad performance testing
+- Supervisor feature testing
+
+## Requirements
+- Both customer and CSR journeys must be covered
+- Integration tests must include key negative paths where practical
+
+## Acceptance Criteria
+- [ ] Customer login and submission flows are covered
+- [ ] Customer request history and detail flows are covered
+- [ ] CSR queue, filter, search, and detail flows are covered
+- [ ] CSR status update and note flows are covered
+
+## Validation
+### Automated
+- [ ] Implement end-to-end coverage for the specified journeys
+
+### Manual
+- [ ] Review integration test reports and verify the expected journeys are covered
+
+## Dependencies
+- CP-008
+- CP-010
+- CP-011
+- CSR-003
+- CSR-008
+- CSR-009
+- CSR-011
+
+## Risks / Controls
+- Risk: Untested UI-to-API integration may cause late-stage failures
+  - Control: Run the suite against release candidates
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,QA,
+QA-003: Create business-readable UAT scenarios and expected outcomes for customer-facing functionality,"## Import Metadata
+- Issue key: `QA-003`
+- Project: Service Request Portal MVP
+- Milestone: QA / UAT / Release
+- Domain label: `QA`
+- Priority: High
+- Blocked by: CP-008, CP-010, CP-011
+- Blocks: QA-005
+- Source file: `project/linear/tickets/QA-003_prepare-uat-pack-for-customer-journeys.md`
+
+---
+## Summary
+Create business-readable UAT scenarios and expected outcomes for customer-facing functionality.
+
+## Why
+Business stakeholders need a clear way to validate the customer experience before release.
+
+## Context
+Customer UAT should cover request submission, request tracking, and data segregation outcomes.
+
+## In Scope
+- Write UAT scenarios for customer submission flows
+- Write UAT scenarios for customer request tracking
+- Write UAT scenarios for customer data segregation checks
+
+## Out of Scope
+- CSR UAT scenarios
+- Automated test implementation
+
+## Requirements
+- UAT scenarios must be understandable to business users
+- Pass/fail criteria must be explicit
+
+## Acceptance Criteria
+- [ ] Customer submission scenario included
+- [ ] Customer request tracking scenario included
+- [ ] Customer data segregation scenario included
+- [ ] Pass/fail criteria included
+
+## Validation
+### Automated
+- [ ] N/A for this documentation task
+
+### Manual
+- [ ] Review the UAT pack with product and customer operations stakeholders
+
+## Dependencies
+- CP-008
+- CP-010
+- CP-011
+
+## Risks / Controls
+- Risk: Vague UAT steps may create inconsistent sign-off
+  - Control: Use explicit expected outcomes and pass criteria
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,QA,
+QA-004: Create business-readable UAT scenarios and expected outcomes for CSR-facing functionality,"## Import Metadata
+- Issue key: `QA-004`
+- Project: Service Request Portal MVP
+- Milestone: QA / UAT / Release
+- Domain label: `QA`
+- Priority: High
+- Blocked by: CSR-003, CSR-008, CSR-009, CSR-011
+- Blocks: QA-005
+- Source file: `project/linear/tickets/QA-004_prepare-uat-pack-for-csr-journeys.md`
+
+---
+## Summary
+Create business-readable UAT scenarios and expected outcomes for CSR-facing functionality.
+
+## Why
+CSR leads and operations stakeholders need a structured way to validate the staff workflow before release.
+
+## Context
+CSR UAT should cover queue usage, review, status updates, notes, and invalid transition handling.
+
+## In Scope
+- Write UAT scenarios for the CSR queue
+- Write UAT scenarios for request review and status changes
+- Write UAT scenarios for internal notes and invalid transitions
+
+## Out of Scope
+- Customer UAT scenarios
+- Automated test implementation
+
+## Requirements
+- UAT scenarios must be understandable to business users
+- Pass/fail criteria must be explicit
+
+## Acceptance Criteria
+- [ ] CSR queue scenario included
+- [ ] CSR review and status update scenario included
+- [ ] Internal note scenario included
+- [ ] Invalid transition scenario included
+
+## Validation
+### Automated
+- [ ] N/A for this documentation task
+
+### Manual
+- [ ] Review the UAT pack with CSR team leads and operations stakeholders
+
+## Dependencies
+- CSR-003
+- CSR-008
+- CSR-009
+- CSR-011
+
+## Risks / Controls
+- Risk: Missing key CSR journeys may hide operational issues
+  - Control: Base the pack on the main queue-to-completion workflow
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,QA,
+"QA-005: Create a release readiness checklist covering sign-offs, deployment validation, and rollback steps","## Import Metadata
+- Issue key: `QA-005`
+- Project: Service Request Portal MVP
+- Milestone: QA / UAT / Release
+- Domain label: `QA`
+- Priority: High
+- Blocked by: QA-001, QA-002, QA-003, QA-004, SEC-005
+- Blocks: None
+- Source file: `project/linear/tickets/QA-005_prepare-release-checklist-and-rollback-plan.md`
+
+---
+## Summary
+Create a release readiness checklist covering sign-offs, deployment validation, and rollback steps.
+
+## Why
+Controlled release management reduces production risk and ensures the manual-review rule is checked before go-live.
+
+## Context
+The checklist should cover functional sign-off, security controls, known issues, deployment validation, and rollback planning.
+
+## In Scope
+- Document release readiness checks
+- Document rollback steps and triggers
+- Identify critical dependencies and sign-offs
+
+## Out of Scope
+- Automated deployment pipeline implementation
+- Detailed operations runbooks beyond release essentials
+
+## Requirements
+- The manual-review rule must be explicitly re-checked before release
+- Critical sign-offs and dependencies must be visible
+
+## Acceptance Criteria
+- [ ] Release checklist exists
+- [ ] Rollback plan exists
+- [ ] Critical dependencies and sign-offs are identified
+- [ ] Manual-review rule is explicitly re-checked pre-release
+
+## Validation
+### Automated
+- [ ] N/A for this documentation task
+
+### Manual
+- [ ] Review the checklist and rollback plan with engineering, product, and control stakeholders
+
+## Dependencies
+- QA-001
+- QA-002
+- QA-003
+- QA-004
+- SEC-005
+
+## Risks / Controls
+- Risk: An incomplete rollback plan increases production risk
+  - Control: Document rollback triggers, steps, and ownership clearly
+
+## Notes
+- This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
+",High,,QA,

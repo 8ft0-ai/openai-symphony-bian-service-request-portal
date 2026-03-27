@@ -402,12 +402,14 @@ Good:
 - `Artifact: https://linear.app/.../file/...` or `Artifact: https://github.com/user-attachments/...`
 - `Artifact: PR comment dated 2026-03-23 with pasted Playwright output and screenshot`
 - `Artifact: https://github.com/<org>/<repo>/actions/runs/<id>` when the check run directly proves the criterion
+- ``![Greeting page showing Hello, Alice](https://public.linear.app/...)`` embedded directly in the workpad comment
 
 Bad:
 
 - `Artifact: artifacts/exr-9-greeting-page.png`
 - `Artifact: /Users/name/Desktop/screenshot.png`
 - `Artifact: see local notes` or any reference a reviewer cannot open from Linear or GitHub
+- `https://public.linear.app/...` as a bare screenshot URL with no inline embed in the workpad comment
 
 No PR applicable example:
 
@@ -488,7 +490,6 @@ Use this exact structure for the persistent workpad comment and keep it updated 
 #### No PR applicable example
 
 - `No PR applicable for this run: HEAD equals origin/main, gh pr list --state all --head "<branch>" returned [], fallback issue search returned [], and no issue-scoped diff remained to publish. Evidence is posted in this Linear workpad.`
-
 ### Validation
 
 - [ ] targeted tests: `<command>`

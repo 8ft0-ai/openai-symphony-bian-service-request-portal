@@ -24,6 +24,7 @@ Example:
 - display `Hello, <name>` after user interaction
 - handle empty input with a simple validation message or disabled action
 - apply basic readable layout and styling
+- present the page as a friendly welcome card with a clear visual hierarchy
 
 ## Out of Scope
 - backend or database integration
@@ -38,6 +39,7 @@ Example:
 - when a valid name is entered, the app must display `Hello, <name>`
 - empty or whitespace-only input must not produce a personalised greeting
 - the interaction must happen on the page without a full page reload
+- the page should use a distinct card-style layout so the sample demonstrates intentional UI design, not just default browser styling
 
 ## BDD Scenarios
 ### Feature
@@ -78,6 +80,7 @@ And the previous greeting is replaced
 - [ ] Empty input is blocked from producing an invalid greeting
 - [ ] Whitespace-only input is blocked from producing a personalised greeting
 - [ ] Submitting a different valid name replaces the previous greeting
+- [ ] The page uses a welcoming card-style presentation with clear visual hierarchy for the heading, form, and greeting output
 
 ## Validation
 ### Automated
@@ -93,6 +96,7 @@ And the previous greeting is replaced
 - [ ] Submit an empty value and confirm validation behaviour is acceptable
 - [ ] Submit a whitespace-only value and confirm validation behaviour is acceptable
 - [ ] Change the name and confirm the greeting updates correctly
+- [ ] Confirm the page looks intentionally designed rather than relying on unstyled browser defaults
 
 ## Dependencies
 - project frontend scaffold or starter app exists

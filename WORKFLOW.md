@@ -414,6 +414,22 @@ Bad:
 No PR applicable example:
 
 - `No PR applicable for this run: HEAD equals origin/main, gh pr list --state all --head "<branch>" returned [], fallback issue search returned [], and no issue-scoped diff remained to publish. Evidence is posted in this Linear workpad.`
+
+## Notes reference
+
+These note examples are workflow guidance only. They should not be copied into a
+live workpad comment.
+
+Good:
+
+- `2026-03-22 13:53 AEDT Reproduction signal:` `rg --files` in inspected ticket-owned paths returned `README.md` and `project/linear/tickets/README_index.md`; `.symphony/` contains helper infrastructure; no frontend app files were found in the inspected ticket-owned paths.
+- `2026-03-22 13:53 AEDT Pull skill evidence:` blocked in this session because the current checkout's `.git` directory is non-writable.
+
+Bad:
+
+- `2026-03-22 13:53 AEDT The repo has no frontend app files.`
+- `2026-03-22 13:53 AEDT The repo's .git directory is read-only.`
+
 ## Workpad template
 
 Use this exact structure for the persistent workpad comment and keep it updated in place throughout execution:

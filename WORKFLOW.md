@@ -1,7 +1,7 @@
 ---
 tracker:
   kind: linear
-  project_slug: "hello-world-57626686d7fa"
+  project_slug: "service-request-portal-mvp-7b4ee5582c2d"
   active_states:
     - Todo
     - In Progress

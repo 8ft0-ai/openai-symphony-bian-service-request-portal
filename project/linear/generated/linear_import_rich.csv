@@ -1,5 +1,5 @@
 IssueKey,LinearTitle,Summary,Priority,Project,Milestone,StatusSuggestion,Labels,DependencyLayer,RecommendedOrder,BlockedBy,Blocks,SourceFile,Description
-API-001,API-001: Build the API endpoint used by the customer portal to create a new servicing order,Build the API endpoint used by the customer portal to create a new servicing order,High,Service Request Portal MVP,Foundation,Triage,API,0,1,,"API-002, API-003, API-004, API-005, CP-005, CP-006, CP-007, CP-008, QA-001, SEC-005, SEC-006",project/linear/tickets/API-001_implement-post-servicingorder-initiate.md,"## Import Metadata
+API-001,API-001: Build the API endpoint used by the customer portal to create a new servicing order,Build the API endpoint used by the customer portal to create a new servicing order,High,Service Request Portal MVP,Foundation,Backlog,API,0,1,,"API-002, API-003, API-004, API-005, CP-005, CP-006, CP-007, CP-008, QA-001, SEC-005, SEC-006",project/linear/tickets/API-001_implement-post-servicingorder-initiate.md,"## Import Metadata
 - Issue key: `API-001`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -60,7 +60,7 @@ The endpoint accepts an initiate payload and must create a servicing order with 
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CP-001,CP-001: Build the customer login flow for the customer-facing portal using the bank-approved authentication mechanism,Build the customer login flow for the customer-facing portal using the bank-approved authentication mechanism,High,Service Request Portal MVP,Foundation,Triage,CP,0,2,,"CP-002, CP-003, CP-004, CP-010",project/linear/tickets/CP-001_implement-customer-authentication-flow.md,"## Import Metadata
+CP-001,CP-001: Build the customer login flow for the customer-facing portal using the bank-approved authentication mechanism,Build the customer login flow for the customer-facing portal using the bank-approved authentication mechanism,High,Service Request Portal MVP,Foundation,Backlog,CP,0,2,,"CP-002, CP-003, CP-004, CP-010",project/linear/tickets/CP-001_implement-customer-authentication-flow.md,"## Import Metadata
 - Issue key: `CP-001`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -121,7 +121,7 @@ Customer users need a separate authenticated experience from CSR users. Unauthen
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CSR-001,"CSR-001: Build the staff login flow for CSRs, separate from the customer login flow","Build the staff login flow for CSRs, separate from the customer login flow",High,Service Request Portal MVP,Foundation,Triage,CSR,0,3,,"CSR-002, CSR-003",project/linear/tickets/CSR-001_implement-csr-authentication-flow.md,"## Import Metadata
+CSR-001,"CSR-001: Build the staff login flow for CSRs, separate from the customer login flow","Build the staff login flow for CSRs, separate from the customer login flow",High,Service Request Portal MVP,Foundation,Backlog,CSR,0,3,,"CSR-002, CSR-003",project/linear/tickets/CSR-001_implement-csr-authentication-flow.md,"## Import Metadata
 - Issue key: `CSR-001`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -181,7 +181,7 @@ CSR authentication must be distinct from customer authentication and should lead
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-API-002,API-002: Build the API endpoint to return a list of servicing orders for queue and history views,Build the API endpoint to return a list of servicing orders for queue and history views,High,Service Request Portal MVP,Foundation,Triage,API,1,4,API-001,"API-005, API-006, CP-010, CSR-003, CSR-007, QA-001, QA-006",project/linear/tickets/API-002_implement-get-servicingorder-list-endpoint.md,"## Import Metadata
+API-002,API-002: Build the API endpoint to return a list of servicing orders for queue and history views,Build the API endpoint to return a list of servicing orders for queue and history views,High,Service Request Portal MVP,Foundation,Backlog,API,1,4,API-001,"API-005, API-006, CP-010, CSR-003, CSR-007, QA-001, QA-006",project/linear/tickets/API-002_implement-get-servicingorder-list-endpoint.md,"## Import Metadata
 - Issue key: `API-002`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -240,7 +240,7 @@ The endpoint must support status filtering and role-aware access. CSR users can 
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-API-003,"API-003: Build the API endpoint to retrieve a single servicing order by ID, with role-based response shaping","Build the API endpoint to retrieve a single servicing order by ID, with role-based response shaping",High,Service Request Portal MVP,Foundation,Triage,API,1,5,API-001,"API-005, CP-011, CSR-008, QA-001, SEC-001, SEC-002, SEC-006",project/linear/tickets/API-003_implement-get-servicingorder-servicingorderid-endpoint.md,"## Import Metadata
+API-003,"API-003: Build the API endpoint to retrieve a single servicing order by ID, with role-based response shaping","Build the API endpoint to retrieve a single servicing order by ID, with role-based response shaping",High,Service Request Portal MVP,Foundation,Backlog,API,1,5,API-001,"API-005, CP-011, CSR-008, QA-001, SEC-001, SEC-002, SEC-006",project/linear/tickets/API-003_implement-get-servicingorder-servicingorderid-endpoint.md,"## Import Metadata
 - Issue key: `API-003`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -299,7 +299,7 @@ Customers may retrieve only their own servicing orders and must not receive inte
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-API-004,API-004: Build the API endpoint used by CSRs to update request status and add internal notes,Build the API endpoint used by CSRs to update request status and add internal notes,High,Service Request Portal MVP,Foundation,Triage,API,1,6,API-001,"API-005, CP-012, CSR-009, CSR-010, CSR-011, CSR-012, CSR-013, CSR-014, QA-001, SEC-003, SEC-004, SEC-005, SEC-006",project/linear/tickets/API-004_implement-put-servicingorder-servicingorderid-update-endpoint.md,"## Import Metadata
+API-004,API-004: Build the API endpoint used by CSRs to update request status and add internal notes,Build the API endpoint used by CSRs to update request status and add internal notes,High,Service Request Portal MVP,Foundation,Backlog,API,1,6,API-001,"API-005, CP-012, CSR-009, CSR-010, CSR-011, CSR-012, CSR-013, CSR-014, QA-001, SEC-003, SEC-004, SEC-005, SEC-006",project/linear/tickets/API-004_implement-put-servicingorder-servicingorderid-update-endpoint.md,"## Import Metadata
 - Issue key: `API-004`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -361,7 +361,7 @@ The endpoint must require CSR-authenticated context, support valid status transi
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CP-002,CP-002: Implement authorisation controls so customer users can only access their own data and customer-facing screens,Implement authorisation controls so customer users can only access their own data and customer-facing screens,High,Service Request Portal MVP,Foundation,Triage,CP,1,7,CP-001,"CP-004, CP-010, SEC-001",project/linear/tickets/CP-002_enforce-customer-role-based-access-control.md,"## Import Metadata
+CP-002,CP-002: Implement authorisation controls so customer users can only access their own data and customer-facing screens,Implement authorisation controls so customer users can only access their own data and customer-facing screens,High,Service Request Portal MVP,Foundation,Backlog,CP,1,7,CP-001,"CP-004, CP-010, SEC-001",project/linear/tickets/CP-002_enforce-customer-role-based-access-control.md,"## Import Metadata
 - Issue key: `CP-002`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -420,7 +420,7 @@ Customer users must only retrieve their own profile data and their own servicing
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CP-003,"CP-003: Add customer session handling, timeout behaviour, and logout flow consistent with portal security requirements","Add customer session handling, timeout behaviour, and logout flow consistent with portal security requirements",High,Service Request Portal MVP,Foundation,Triage,CP,1,8,CP-001,,project/linear/tickets/CP-003_implement-customer-session-handling-and-logout.md,"## Import Metadata
+CP-003,"CP-003: Add customer session handling, timeout behaviour, and logout flow consistent with portal security requirements","Add customer session handling, timeout behaviour, and logout flow consistent with portal security requirements",High,Service Request Portal MVP,Foundation,Backlog,CP,1,8,CP-001,,project/linear/tickets/CP-003_implement-customer-session-handling-and-logout.md,"## Import Metadata
 - Issue key: `CP-003`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -479,7 +479,7 @@ The customer portal must preserve authenticated access during normal use while p
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CSR-002,CSR-002: Ensure only authenticated CSR users can access CSR portal functions and staff request operations,Ensure only authenticated CSR users can access CSR portal functions and staff request operations,High,Service Request Portal MVP,Foundation,Triage,CSR,1,9,CSR-001,CSR-003,project/linear/tickets/CSR-002_enforce-csr-role-based-access-control.md,"## Import Metadata
+CSR-002,CSR-002: Ensure only authenticated CSR users can access CSR portal functions and staff request operations,Ensure only authenticated CSR users can access CSR portal functions and staff request operations,High,Service Request Portal MVP,Foundation,Backlog,CSR,1,9,CSR-001,CSR-003,project/linear/tickets/CSR-002_enforce-csr-role-based-access-control.md,"## Import Metadata
 - Issue key: `CSR-002`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -536,7 +536,7 @@ CSR users need access to the queue, detail views, notes, and status updates. Non
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-API-005,"API-005: Add validation, standardised error payloads, and consistent failure responses across the servicing order API","Add validation, standardised error payloads, and consistent failure responses across the servicing order API",High,Service Request Portal MVP,Foundation,Triage,API,2,10,"API-001, API-002, API-003, API-004",QA-001,project/linear/tickets/API-005_implement-api-validation-and-standard-error-handling.md,"## Import Metadata
+API-005,"API-005: Add validation, standardised error payloads, and consistent failure responses across the servicing order API","Add validation, standardised error payloads, and consistent failure responses across the servicing order API",High,Service Request Portal MVP,Foundation,Backlog,API,2,10,"API-001, API-002, API-003, API-004",QA-001,project/linear/tickets/API-005_implement-api-validation-and-standard-error-handling.md,"## Import Metadata
 - Issue key: `API-005`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -601,7 +601,7 @@ The API should return predictable status codes and payload shapes for validation
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-API-006,API-006: Add richer filtering and pagination support to improve scalability for CSR queue use cases,Add richer filtering and pagination support to improve scalability for CSR queue use cases,Medium,Service Request Portal MVP,CSR Processing,Triage,API,2,11,API-002,,project/linear/tickets/API-006_expand-api-filtering-and-pagination-support.md,"## Import Metadata
+API-006,API-006: Add richer filtering and pagination support to improve scalability for CSR queue use cases,Add richer filtering and pagination support to improve scalability for CSR queue use cases,Medium,Service Request Portal MVP,CSR Processing,Backlog,API,2,11,API-002,,project/linear/tickets/API-006_expand-api-filtering-and-pagination-support.md,"## Import Metadata
 - Issue key: `API-006`
 - Project: Service Request Portal MVP
 - Milestone: CSR Processing
@@ -657,7 +657,7 @@ This is a post-MVP enhancement building on the basic list endpoint to support pa
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CP-004,CP-004: Create the customer dashboard showing the customer’s current personal information on record,Create the customer dashboard showing the customer’s current personal information on record,High,Service Request Portal MVP,Foundation,Triage,CP,2,12,"CP-001, CP-002","CP-005, CP-006, CP-007",project/linear/tickets/CP-004_build-customer-dashboard-with-current-profile-display.md,"## Import Metadata
+CP-004,CP-004: Create the customer dashboard showing the customer’s current personal information on record,Create the customer dashboard showing the customer’s current personal information on record,High,Service Request Portal MVP,Foundation,Backlog,CP,2,12,"CP-001, CP-002","CP-005, CP-006, CP-007",project/linear/tickets/CP-004_build-customer-dashboard-with-current-profile-display.md,"## Import Metadata
 - Issue key: `CP-004`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -717,7 +717,7 @@ The dashboard is the landing experience after login and should show address, pho
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CP-010,CP-010: Create a request history view showing all servicing orders for the authenticated customer only,Create a request history view showing all servicing orders for the authenticated customer only,High,Service Request Portal MVP,Customer Tracking & Controls,Triage,CP,2,13,"CP-001, CP-002, API-002","CP-011, CP-012, QA-002, QA-003",project/linear/tickets/CP-010_build-customer-request-history-list.md,"## Import Metadata
+CP-010,CP-010: Create a request history view showing all servicing orders for the authenticated customer only,Create a request history view showing all servicing orders for the authenticated customer only,High,Service Request Portal MVP,Customer Tracking & Controls,Backlog,CP,2,13,"CP-001, CP-002, API-002","CP-011, CP-012, QA-002, QA-003",project/linear/tickets/CP-010_build-customer-request-history-list.md,"## Import Metadata
 - Issue key: `CP-010`
 - Project: Service Request Portal MVP
 - Milestone: Customer Tracking & Controls
@@ -776,7 +776,7 @@ The history list should show request type, submission date, and status, and must
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CSR-003,"CSR-003: Create the centralised service request queue for CSRs, displaying requests across customers","Create the centralised service request queue for CSRs, displaying requests across customers",High,Service Request Portal MVP,Foundation,Triage,CSR,2,14,"CSR-001, CSR-002, API-002","CSR-004, CSR-005, CSR-006, CSR-007, CSR-008, QA-002, QA-004, QA-006",project/linear/tickets/CSR-003_build-csr-work-queue-dashboard.md,"## Import Metadata
+CSR-003,"CSR-003: Create the centralised service request queue for CSRs, displaying requests across customers","Create the centralised service request queue for CSRs, displaying requests across customers",High,Service Request Portal MVP,Foundation,Backlog,CSR,2,14,"CSR-001, CSR-002, API-002","CSR-004, CSR-005, CSR-006, CSR-007, CSR-008, QA-002, QA-004, QA-006",project/linear/tickets/CSR-003_build-csr-work-queue-dashboard.md,"## Import Metadata
 - Issue key: `CSR-003`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -835,7 +835,7 @@ The queue is the main CSR working surface and should show customer name, request
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-SEC-001,SEC-001: Implement and verify controls preventing customers from retrieving servicing orders that do not belong to them,Implement and verify controls preventing customers from retrieving servicing orders that do not belong to them,High,Service Request Portal MVP,Foundation,Triage,SEC,2,15,"CP-002, API-003",,project/linear/tickets/SEC-001_block-unauthorised-access-to-other-customers-requests.md,"## Import Metadata
+SEC-001,SEC-001: Implement and verify controls preventing customers from retrieving servicing orders that do not belong to them,Implement and verify controls preventing customers from retrieving servicing orders that do not belong to them,High,Service Request Portal MVP,Foundation,Backlog,SEC,2,15,"CP-002, API-003",,project/linear/tickets/SEC-001_block-unauthorised-access-to-other-customers-requests.md,"## Import Metadata
 - Issue key: `SEC-001`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -892,7 +892,7 @@ Customer users must only ever see their own servicing orders, regardless of UI p
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-SEC-003,"SEC-003: Persist and expose audit metadata for status changes, including actor and timestamp","Persist and expose audit metadata for status changes, including actor and timestamp",High,Service Request Portal MVP,Foundation,Triage,SEC,2,16,API-004,CSR-009,project/linear/tickets/SEC-003_capture-audit-metadata-for-status-changes.md,"## Import Metadata
+SEC-003,"SEC-003: Persist and expose audit metadata for status changes, including actor and timestamp","Persist and expose audit metadata for status changes, including actor and timestamp",High,Service Request Portal MVP,Foundation,Backlog,SEC,2,16,API-004,CSR-009,project/linear/tickets/SEC-003_capture-audit-metadata-for-status-changes.md,"## Import Metadata
 - Issue key: `SEC-003`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -948,7 +948,7 @@ Status updates are key operational actions and must be logged and persisted with
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-SEC-004,SEC-004: Persist and expose audit metadata for internal note creation,Persist and expose audit metadata for internal note creation,High,Service Request Portal MVP,Foundation,Triage,SEC,2,17,API-004,,project/linear/tickets/SEC-004_capture-audit-metadata-for-internal-notes.md,"## Import Metadata
+SEC-004,SEC-004: Persist and expose audit metadata for internal note creation,Persist and expose audit metadata for internal note creation,High,Service Request Portal MVP,Foundation,Backlog,SEC,2,17,API-004,,project/linear/tickets/SEC-004_capture-audit-metadata-for-internal-notes.md,"## Import Metadata
 - Issue key: `SEC-004`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -1004,7 +1004,7 @@ Notes are operational artefacts and should be attributable in the same way as st
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-SEC-005,SEC-005: Implement explicit controls so the system cannot auto-complete servicing orders or auto-apply profile changes without CSR action,Implement explicit controls so the system cannot auto-complete servicing orders or auto-apply profile changes without CSR action,High,Service Request Portal MVP,Foundation,Triage,SEC,2,18,"API-001, API-004","CSR-009, CSR-014, QA-005",project/linear/tickets/SEC-005_block-automated-completion-and-downstream-auto-fulfilment-paths.md,"## Import Metadata
+SEC-005,SEC-005: Implement explicit controls so the system cannot auto-complete servicing orders or auto-apply profile changes without CSR action,Implement explicit controls so the system cannot auto-complete servicing orders or auto-apply profile changes without CSR action,High,Service Request Portal MVP,Foundation,Backlog,SEC,2,18,"API-001, API-004","CSR-009, CSR-014, QA-005",project/linear/tickets/SEC-005_block-automated-completion-and-downstream-auto-fulfilment-paths.md,"## Import Metadata
 - Issue key: `SEC-005`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -1064,7 +1064,7 @@ The portal is a workflow tracker for manual servicing. It must not automatically
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-SEC-006,"SEC-006: Add logging for important security and workflow events, including failed access attempts and request lifecycle actions","Add logging for important security and workflow events, including failed access attempts and request lifecycle actions",High,Service Request Portal MVP,Foundation,Triage,SEC,2,19,"API-001, API-003, API-004",,project/linear/tickets/SEC-006_add-operational-logging-for-access-denials-and-key-workflow-events.md,"## Import Metadata
+SEC-006,"SEC-006: Add logging for important security and workflow events, including failed access attempts and request lifecycle actions","Add logging for important security and workflow events, including failed access attempts and request lifecycle actions",High,Service Request Portal MVP,Foundation,Backlog,SEC,2,19,"API-001, API-003, API-004",,project/linear/tickets/SEC-006_add-operational-logging-for-access-denials-and-key-workflow-events.md,"## Import Metadata
 - Issue key: `SEC-006`
 - Project: Service Request Portal MVP
 - Milestone: Foundation
@@ -1125,7 +1125,7 @@ Key events include request creation, status updates, note additions, and access 
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CP-005,CP-005: Create a customer form for submitting an address change request,Create a customer form for submitting an address change request,High,Service Request Portal MVP,Customer Submission,Triage,CP,3,20,"CP-004, API-001",CP-008,project/linear/tickets/CP-005_build-address-update-request-form.md,"## Import Metadata
+CP-005,CP-005: Create a customer form for submitting an address change request,Create a customer form for submitting an address change request,High,Service Request Portal MVP,Customer Submission,Backlog,CP,3,20,"CP-004, API-001",CP-008,project/linear/tickets/CP-005_build-address-update-request-form.md,"## Import Metadata
 - Issue key: `CP-005`
 - Project: Service Request Portal MVP
 - Milestone: Customer Submission
@@ -1184,7 +1184,7 @@ The form must show the current address and accept the requested new address, cre
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CP-006,CP-006: Create a customer form for submitting a phone number change request,Create a customer form for submitting a phone number change request,High,Service Request Portal MVP,Customer Submission,Triage,CP,3,21,"CP-004, API-001",CP-008,project/linear/tickets/CP-006_build-phone-number-update-request-form.md,"## Import Metadata
+CP-006,CP-006: Create a customer form for submitting a phone number change request,Create a customer form for submitting a phone number change request,High,Service Request Portal MVP,Customer Submission,Backlog,CP,3,21,"CP-004, API-001",CP-008,project/linear/tickets/CP-006_build-phone-number-update-request-form.md,"## Import Metadata
 - Issue key: `CP-006`
 - Project: Service Request Portal MVP
 - Milestone: Customer Submission
@@ -1243,7 +1243,7 @@ The form must show the current phone number and allow the user to request a new 
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CP-007,CP-007: Create a customer form for submitting an email address change request,Create a customer form for submitting an email address change request,High,Service Request Portal MVP,Customer Submission,Triage,CP,3,22,"CP-004, API-001",CP-008,project/linear/tickets/CP-007_build-email-address-update-request-form.md,"## Import Metadata
+CP-007,CP-007: Create a customer form for submitting an email address change request,Create a customer form for submitting an email address change request,High,Service Request Portal MVP,Customer Submission,Backlog,CP,3,22,"CP-004, API-001",CP-008,project/linear/tickets/CP-007_build-email-address-update-request-form.md,"## Import Metadata
 - Issue key: `CP-007`
 - Project: Service Request Portal MVP
 - Milestone: Customer Submission
@@ -1302,7 +1302,7 @@ The form must show the current email address and allow a new requested email to 
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CP-011,CP-011: Create a detail page where a customer can view the information and status for a single servicing order,Create a detail page where a customer can view the information and status for a single servicing order,High,Service Request Portal MVP,Customer Tracking & Controls,Triage,CP,3,23,"CP-010, API-003","CP-012, QA-002, QA-003, SEC-002",project/linear/tickets/CP-011_build-customer-request-detail-page.md,"## Import Metadata
+CP-011,CP-011: Create a detail page where a customer can view the information and status for a single servicing order,Create a detail page where a customer can view the information and status for a single servicing order,High,Service Request Portal MVP,Customer Tracking & Controls,Backlog,CP,3,23,"CP-010, API-003","CP-012, QA-002, QA-003, SEC-002",project/linear/tickets/CP-011_build-customer-request-detail-page.md,"## Import Metadata
 - Issue key: `CP-011`
 - Project: Service Request Portal MVP
 - Milestone: Customer Tracking & Controls
@@ -1362,7 +1362,7 @@ The page should show request type, dates, request details, and current status, b
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CSR-004,CSR-004: Allow CSR users to filter the queue by servicing order status,Allow CSR users to filter the queue by servicing order status,High,Service Request Portal MVP,CSR Processing,Triage,CSR,3,24,CSR-003,,project/linear/tickets/CSR-004_add-status-filter-to-csr-work-queue.md,"## Import Metadata
+CSR-004,CSR-004: Allow CSR users to filter the queue by servicing order status,Allow CSR users to filter the queue by servicing order status,High,Service Request Portal MVP,CSR Processing,Backlog,CSR,3,24,CSR-003,,project/linear/tickets/CSR-004_add-status-filter-to-csr-work-queue.md,"## Import Metadata
 - Issue key: `CSR-004`
 - Project: Service Request Portal MVP
 - Milestone: CSR Processing
@@ -1419,7 +1419,7 @@ The queue should support filtering by statuses such as `Pending`, `In Progress`,
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CSR-005,CSR-005: Enable CSR users to search the queue by customer name,Enable CSR users to search the queue by customer name,High,Service Request Portal MVP,CSR Processing,Triage,CSR,3,25,CSR-003,,project/linear/tickets/CSR-005_add-search-by-customer-name-to-csr-work-queue.md,"## Import Metadata
+CSR-005,CSR-005: Enable CSR users to search the queue by customer name,Enable CSR users to search the queue by customer name,High,Service Request Portal MVP,CSR Processing,Backlog,CSR,3,25,CSR-003,,project/linear/tickets/CSR-005_add-search-by-customer-name-to-csr-work-queue.md,"## Import Metadata
 - Issue key: `CSR-005`
 - Project: Service Request Portal MVP
 - Milestone: CSR Processing
@@ -1476,7 +1476,7 @@ Customer name search should work within the central queue and return relevant ma
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CSR-006,CSR-006: Enable CSR users to search the queue by servicing order ID,Enable CSR users to search the queue by servicing order ID,High,Service Request Portal MVP,CSR Processing,Triage,CSR,3,26,CSR-003,,project/linear/tickets/CSR-006_add-search-by-servicing-order-id-to-csr-work-queue.md,"## Import Metadata
+CSR-006,CSR-006: Enable CSR users to search the queue by servicing order ID,Enable CSR users to search the queue by servicing order ID,High,Service Request Portal MVP,CSR Processing,Backlog,CSR,3,26,CSR-003,,project/linear/tickets/CSR-006_add-search-by-servicing-order-id-to-csr-work-queue.md,"## Import Metadata
 - Issue key: `CSR-006`
 - Project: Service Request Portal MVP
 - Milestone: CSR Processing
@@ -1533,7 +1533,7 @@ Servicing order ID search should return the exact matching request or a clear no
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CSR-007,CSR-007: Improve the CSR queue with pagination and sorting to support growing request volumes,Improve the CSR queue with pagination and sorting to support growing request volumes,Medium,Service Request Portal MVP,CSR Processing,Triage,CSR,3,27,"CSR-003, API-002",,project/linear/tickets/CSR-007_add-queue-pagination-and-sorting.md,"## Import Metadata
+CSR-007,CSR-007: Improve the CSR queue with pagination and sorting to support growing request volumes,Improve the CSR queue with pagination and sorting to support growing request volumes,Medium,Service Request Portal MVP,CSR Processing,Backlog,CSR,3,27,"CSR-003, API-002",,project/linear/tickets/CSR-007_add-queue-pagination-and-sorting.md,"## Import Metadata
 - Issue key: `CSR-007`
 - Project: Service Request Portal MVP
 - Milestone: CSR Processing
@@ -1591,7 +1591,7 @@ This is a scalability and usability enhancement for the CSR queue rather than a 
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CSR-008,CSR-008: Create a CSR detail view for a single servicing order with enough information to review and process it manually,Create a CSR detail view for a single servicing order with enough information to review and process it manually,High,Service Request Portal MVP,CSR Processing,Triage,CSR,3,28,"CSR-003, API-003","CSR-009, CSR-011, QA-002, QA-004, SEC-002",project/linear/tickets/CSR-008_build-csr-request-detail-page.md,"## Import Metadata
+CSR-008,CSR-008: Create a CSR detail view for a single servicing order with enough information to review and process it manually,Create a CSR detail view for a single servicing order with enough information to review and process it manually,High,Service Request Portal MVP,CSR Processing,Backlog,CSR,3,28,"CSR-003, API-003","CSR-009, CSR-011, QA-002, QA-004, SEC-002",project/linear/tickets/CSR-008_build-csr-request-detail-page.md,"## Import Metadata
 - Issue key: `CSR-008`
 - Project: Service Request Portal MVP
 - Milestone: CSR Processing
@@ -1651,7 +1651,7 @@ The CSR detail page is the operational surface for reviewing a request, adding n
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-QA-001,"QA-001: Build automated tests covering the servicing order API happy paths, negative paths, validation, and authorisation cases","Build automated tests covering the servicing order API happy paths, negative paths, validation, and authorisation cases",High,Service Request Portal MVP,QA / UAT / Release,Triage,QA,3,29,"API-001, API-002, API-003, API-004, API-005",QA-005,project/linear/tickets/QA-001_create-automated-api-test-suite.md,"## Import Metadata
+QA-001,"QA-001: Build automated tests covering the servicing order API happy paths, negative paths, validation, and authorisation cases","Build automated tests covering the servicing order API happy paths, negative paths, validation, and authorisation cases",High,Service Request Portal MVP,QA / UAT / Release,Backlog,QA,3,29,"API-001, API-002, API-003, API-004, API-005",QA-005,project/linear/tickets/QA-001_create-automated-api-test-suite.md,"## Import Metadata
 - Issue key: `QA-001`
 - Project: Service Request Portal MVP
 - Milestone: QA / UAT / Release
@@ -1712,7 +1712,7 @@ The servicing order API underpins both portals, so its contracts and controls ne
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-QA-006,"QA-006: Define reporting needs such as queue ageing, counts by status, and operational throughput for later implementation","Define reporting needs such as queue ageing, counts by status, and operational throughput for later implementation",Medium,Service Request Portal MVP,QA / UAT / Release,Triage,QA,3,30,"CSR-003, API-002",,project/linear/tickets/QA-006_add-operational-reporting-dashboard-requirements.md,"## Import Metadata
+QA-006,"QA-006: Define reporting needs such as queue ageing, counts by status, and operational throughput for later implementation","Define reporting needs such as queue ageing, counts by status, and operational throughput for later implementation",Medium,Service Request Portal MVP,QA / UAT / Release,Backlog,QA,3,30,"CSR-003, API-002",,project/linear/tickets/QA-006_add-operational-reporting-dashboard-requirements.md,"## Import Metadata
 - Issue key: `QA-006`
 - Project: Service Request Portal MVP
 - Milestone: QA / UAT / Release
@@ -1767,7 +1767,7 @@ This issue is about documenting requirements rather than building reporting dash
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CP-008,CP-008: Connect customer request forms to the servicing order initiate API so valid submissions create servicing orders,Connect customer request forms to the servicing order initiate API so valid submissions create servicing orders,High,Service Request Portal MVP,Customer Submission,Triage,CP,4,31,"CP-005, CP-006, CP-007, API-001","CP-009, QA-002, QA-003",project/linear/tickets/CP-008_integrate-customer-request-submission-with-servicing-order-initiate-api.md,"## Import Metadata
+CP-008,CP-008: Connect customer request forms to the servicing order initiate API so valid submissions create servicing orders,Connect customer request forms to the servicing order initiate API so valid submissions create servicing orders,High,Service Request Portal MVP,Customer Submission,Backlog,CP,4,31,"CP-005, CP-006, CP-007, API-001","CP-009, QA-002, QA-003",project/linear/tickets/CP-008_integrate-customer-request-submission-with-servicing-order-initiate-api.md,"## Import Metadata
 - Issue key: `CP-008`
 - Project: Service Request Portal MVP
 - Milestone: Customer Submission
@@ -1829,7 +1829,7 @@ Address, phone, and email update forms all rely on `POST /ServicingOrder/Initiat
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CSR-009,CSR-009: Enable CSRs to update servicing order status through the CSR portal in line with the approved manual workflow,Enable CSRs to update servicing order status through the CSR portal in line with the approved manual workflow,High,Service Request Portal MVP,CSR Processing,Triage,CSR,4,32,"CSR-008, API-004, SEC-003, SEC-005","CP-012, CSR-010, CSR-013, CSR-014, QA-002, QA-004",project/linear/tickets/CSR-009_add-csr-status-update-control.md,"## Import Metadata
+CSR-009,CSR-009: Enable CSRs to update servicing order status through the CSR portal in line with the approved manual workflow,Enable CSRs to update servicing order status through the CSR portal in line with the approved manual workflow,High,Service Request Portal MVP,CSR Processing,Backlog,CSR,4,32,"CSR-008, API-004, SEC-003, SEC-005","CP-012, CSR-010, CSR-013, CSR-014, QA-002, QA-004",project/linear/tickets/CSR-009_add-csr-status-update-control.md,"## Import Metadata
 - Issue key: `CSR-009`
 - Project: Service Request Portal MVP
 - Milestone: CSR Processing
@@ -1914,7 +1914,7 @@ The approved workflow supports `Pending` → `In Progress`, and `In Progress` �
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CSR-011,CSR-011: Allow CSR users to add staff-only notes to a servicing order,Allow CSR users to add staff-only notes to a servicing order,High,Service Request Portal MVP,CSR Processing,Triage,CSR,4,33,"CSR-008, API-004","CSR-012, CSR-013, QA-002, QA-004",project/linear/tickets/CSR-011_add-csr-internal-note-entry.md,"## Import Metadata
+CSR-011,CSR-011: Allow CSR users to add staff-only notes to a servicing order,Allow CSR users to add staff-only notes to a servicing order,High,Service Request Portal MVP,CSR Processing,Backlog,CSR,4,33,"CSR-008, API-004","CSR-012, CSR-013, QA-002, QA-004",project/linear/tickets/CSR-011_add-csr-internal-note-entry.md,"## Import Metadata
 - Issue key: `CSR-011`
 - Project: Service Request Portal MVP
 - Milestone: CSR Processing
@@ -1973,7 +1973,7 @@ Internal notes are part of the servicing order record and must be visible to sta
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-SEC-002,SEC-002: Ensure internal notes and other staff-only data are excluded from customer-facing API responses and UI views,Ensure internal notes and other staff-only data are excluded from customer-facing API responses and UI views,High,Service Request Portal MVP,Customer Tracking & Controls,Triage,SEC,4,34,"API-003, CP-011, CSR-008",,project/linear/tickets/SEC-002_suppress-internal-notes-from-customer-facing-payloads.md,"## Import Metadata
+SEC-002,SEC-002: Ensure internal notes and other staff-only data are excluded from customer-facing API responses and UI views,Ensure internal notes and other staff-only data are excluded from customer-facing API responses and UI views,High,Service Request Portal MVP,Customer Tracking & Controls,Backlog,SEC,4,34,"API-003, CP-011, CSR-008",,project/linear/tickets/SEC-002_suppress-internal-notes-from-customer-facing-payloads.md,"## Import Metadata
 - Issue key: `SEC-002`
 - Project: Service Request Portal MVP
 - Milestone: Customer Tracking & Controls
@@ -2031,7 +2031,7 @@ The same servicing order can be viewed by customers and CSRs, but only CSR conte
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CP-009,CP-009: Display a clear confirmation state after a customer successfully submits a servicing request,Display a clear confirmation state after a customer successfully submits a servicing request,High,Service Request Portal MVP,Customer Submission,Triage,CP,5,35,CP-008,,project/linear/tickets/CP-009_show-request-submission-confirmation-to-customer.md,"## Import Metadata
+CP-009,CP-009: Display a clear confirmation state after a customer successfully submits a servicing request,Display a clear confirmation state after a customer successfully submits a servicing request,High,Service Request Portal MVP,Customer Submission,Backlog,CP,5,35,CP-008,,project/linear/tickets/CP-009_show-request-submission-confirmation-to-customer.md,"## Import Metadata
 - Issue key: `CP-009`
 - Project: Service Request Portal MVP
 - Milestone: Customer Submission
@@ -2089,7 +2089,7 @@ After a successful initiate API call, the portal should show a reference and the
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CP-012,CP-012: Ensure the customer portal reflects CSR status changes in real time or near real time,Ensure the customer portal reflects CSR status changes in real time or near real time,High,Service Request Portal MVP,Customer Tracking & Controls,Triage,CP,5,36,"CP-010, CP-011, CSR-009, API-004",,project/linear/tickets/CP-012_refresh-customer-visible-status-after-csr-updates.md,"## Import Metadata
+CP-012,CP-012: Ensure the customer portal reflects CSR status changes in real time or near real time,Ensure the customer portal reflects CSR status changes in real time or near real time,High,Service Request Portal MVP,Customer Tracking & Controls,Backlog,CP,5,36,"CP-010, CP-011, CSR-009, API-004",,project/linear/tickets/CP-012_refresh-customer-visible-status-after-csr-updates.md,"## Import Metadata
 - Issue key: `CP-012`
 - Project: Service Request Portal MVP
 - Milestone: Customer Tracking & Controls
@@ -2149,7 +2149,7 @@ When a CSR changes a request to `In Progress`, `Completed`, or `Rejected`, the c
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CSR-010,CSR-010: Implement workflow rules so invalid servicing order status transitions are blocked,Implement workflow rules so invalid servicing order status transitions are blocked,High,Service Request Portal MVP,CSR Processing,Triage,CSR,5,37,"CSR-009, API-004",,project/linear/tickets/CSR-010_enforce-valid-status-transitions.md,"## Import Metadata
+CSR-010,CSR-010: Implement workflow rules so invalid servicing order status transitions are blocked,Implement workflow rules so invalid servicing order status transitions are blocked,High,Service Request Portal MVP,CSR Processing,Backlog,CSR,5,37,"CSR-009, API-004",,project/linear/tickets/CSR-010_enforce-valid-status-transitions.md,"## Import Metadata
 - Issue key: `CSR-010`
 - Project: Service Request Portal MVP
 - Milestone: CSR Processing
@@ -2208,7 +2208,7 @@ The MVP workflow permits `Pending` → `In Progress`, and `In Progress` → `Com
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CSR-012,CSR-012: Ensure internal notes are saved with authorship and timestamp metadata for auditability,Ensure internal notes are saved with authorship and timestamp metadata for auditability,High,Service Request Portal MVP,CSR Processing,Triage,CSR,5,38,"CSR-011, API-004",,project/linear/tickets/CSR-012_persist-internal-notes-with-author-and-timestamp.md,"## Import Metadata
+CSR-012,CSR-012: Ensure internal notes are saved with authorship and timestamp metadata for auditability,Ensure internal notes are saved with authorship and timestamp metadata for auditability,High,Service Request Portal MVP,CSR Processing,Backlog,CSR,5,38,"CSR-011, API-004",,project/linear/tickets/CSR-012_persist-internal-notes-with-author-and-timestamp.md,"## Import Metadata
 - Issue key: `CSR-012`
 - Project: Service Request Portal MVP
 - Milestone: CSR Processing
@@ -2265,7 +2265,7 @@ A free-text note without author and time metadata is not sufficient for audit an
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CSR-013,CSR-013: Support a structured rejection reason in addition to or instead of a free-text internal note for rejected requests,Support a structured rejection reason in addition to or instead of a free-text internal note for rejected requests,Medium,Service Request Portal MVP,CSR Processing,Triage,CSR,5,39,"CSR-009, CSR-011, API-004",,project/linear/tickets/CSR-013_add-optional-rejection-reason-field.md,"## Import Metadata
+CSR-013,CSR-013: Support a structured rejection reason in addition to or instead of a free-text internal note for rejected requests,Support a structured rejection reason in addition to or instead of a free-text internal note for rejected requests,Medium,Service Request Portal MVP,CSR Processing,Backlog,CSR,5,39,"CSR-009, CSR-011, API-004",,project/linear/tickets/CSR-013_add-optional-rejection-reason-field.md,"## Import Metadata
 - Issue key: `CSR-013`
 - Project: Service Request Portal MVP
 - Milestone: CSR Processing
@@ -2323,7 +2323,7 @@ This is a post-MVP usability and data-quality enhancement. Exposure rules for an
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-CSR-014,CSR-014: Implement controls ensuring the portal supports manual processing only and does not auto-fulfil customer changes,Implement controls ensuring the portal supports manual processing only and does not auto-fulfil customer changes,High,Service Request Portal MVP,CSR Processing,Triage,CSR,5,40,"CSR-009, API-004, SEC-005",,project/linear/tickets/CSR-014_enforce-manual-processing-only-across-csr-workflow.md,"## Import Metadata
+CSR-014,CSR-014: Implement controls ensuring the portal supports manual processing only and does not auto-fulfil customer changes,Implement controls ensuring the portal supports manual processing only and does not auto-fulfil customer changes,High,Service Request Portal MVP,CSR Processing,Backlog,CSR,5,40,"CSR-009, API-004, SEC-005",,project/linear/tickets/CSR-014_enforce-manual-processing-only-across-csr-workflow.md,"## Import Metadata
 - Issue key: `CSR-014`
 - Project: Service Request Portal MVP
 - Milestone: CSR Processing
@@ -2383,7 +2383,7 @@ The portal is a workflow and tracking layer. It must not automatically apply add
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-QA-002,QA-002: Build integration or end-to-end tests for customer and CSR journeys across the portal,Build integration or end-to-end tests for customer and CSR journeys across the portal,High,Service Request Portal MVP,QA / UAT / Release,Triage,QA,5,41,"CP-008, CP-010, CP-011, CSR-003, CSR-008, CSR-009, CSR-011",QA-005,project/linear/tickets/QA-002_create-portal-integration-test-suite.md,"## Import Metadata
+QA-002,QA-002: Build integration or end-to-end tests for customer and CSR journeys across the portal,Build integration or end-to-end tests for customer and CSR journeys across the portal,High,Service Request Portal MVP,QA / UAT / Release,Backlog,QA,5,41,"CP-008, CP-010, CP-011, CSR-003, CSR-008, CSR-009, CSR-011",QA-005,project/linear/tickets/QA-002_create-portal-integration-test-suite.md,"## Import Metadata
 - Issue key: `QA-002`
 - Project: Service Request Portal MVP
 - Milestone: QA / UAT / Release
@@ -2445,7 +2445,7 @@ The suite should cover login, request submission, queue handling, detail views, 
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-QA-003,QA-003: Create business-readable UAT scenarios and expected outcomes for customer-facing functionality,Create business-readable UAT scenarios and expected outcomes for customer-facing functionality,High,Service Request Portal MVP,QA / UAT / Release,Triage,QA,5,42,"CP-008, CP-010, CP-011",QA-005,project/linear/tickets/QA-003_prepare-uat-pack-for-customer-journeys.md,"## Import Metadata
+QA-003,QA-003: Create business-readable UAT scenarios and expected outcomes for customer-facing functionality,Create business-readable UAT scenarios and expected outcomes for customer-facing functionality,High,Service Request Portal MVP,QA / UAT / Release,Backlog,QA,5,42,"CP-008, CP-010, CP-011",QA-005,project/linear/tickets/QA-003_prepare-uat-pack-for-customer-journeys.md,"## Import Metadata
 - Issue key: `QA-003`
 - Project: Service Request Portal MVP
 - Milestone: QA / UAT / Release
@@ -2503,7 +2503,7 @@ Customer UAT should cover request submission, request tracking, and data segrega
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-QA-004,QA-004: Create business-readable UAT scenarios and expected outcomes for CSR-facing functionality,Create business-readable UAT scenarios and expected outcomes for CSR-facing functionality,High,Service Request Portal MVP,QA / UAT / Release,Triage,QA,5,43,"CSR-003, CSR-008, CSR-009, CSR-011",QA-005,project/linear/tickets/QA-004_prepare-uat-pack-for-csr-journeys.md,"## Import Metadata
+QA-004,QA-004: Create business-readable UAT scenarios and expected outcomes for CSR-facing functionality,Create business-readable UAT scenarios and expected outcomes for CSR-facing functionality,High,Service Request Portal MVP,QA / UAT / Release,Backlog,QA,5,43,"CSR-003, CSR-008, CSR-009, CSR-011",QA-005,project/linear/tickets/QA-004_prepare-uat-pack-for-csr-journeys.md,"## Import Metadata
 - Issue key: `QA-004`
 - Project: Service Request Portal MVP
 - Milestone: QA / UAT / Release
@@ -2562,7 +2562,7 @@ CSR UAT should cover queue usage, review, status updates, notes, and invalid tra
 ## Notes
 - This issue must remain consistent with the project rule that customer profile changes are not processed automatically by this portal.
 "
-QA-005,"QA-005: Create a release readiness checklist covering sign-offs, deployment validation, and rollback steps","Create a release readiness checklist covering sign-offs, deployment validation, and rollback steps",High,Service Request Portal MVP,QA / UAT / Release,Triage,QA,6,44,"QA-001, QA-002, QA-003, QA-004, SEC-005",,project/linear/tickets/QA-005_prepare-release-checklist-and-rollback-plan.md,"## Import Metadata
+QA-005,"QA-005: Create a release readiness checklist covering sign-offs, deployment validation, and rollback steps","Create a release readiness checklist covering sign-offs, deployment validation, and rollback steps",High,Service Request Portal MVP,QA / UAT / Release,Backlog,QA,6,44,"QA-001, QA-002, QA-003, QA-004, SEC-005",,project/linear/tickets/QA-005_prepare-release-checklist-and-rollback-plan.md,"## Import Metadata
 - Issue key: `QA-005`
 - Project: Service Request Portal MVP
 - Milestone: QA / UAT / Release

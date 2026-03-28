@@ -75,15 +75,24 @@ Milestones:
 - `Customer Tracking & Controls`
 - `QA / UAT / Release`
 
-Recommended board states:
+Use the existing `elixir` team states:
 
-- `Triage`
-- `Ready`
+- `Backlog`
+- `Todo`
 - `In Progress`
 - `In Review`
-- `Blocked`
-- `Ready for UAT`
 - `Done`
+- `Canceled`
+- `Duplicate`
+
+Notes:
+
+- do not create a second custom state model such as `Triage` or `Ready` for
+  this backlog
+- use `Backlog` as the initial import state
+- use `Todo` as the ready queue after review
+- represent blocked work via dependency links and saved views rather than a
+  dedicated `Blocked` state
 
 ## Step 3: Import issues
 
@@ -91,9 +100,20 @@ Import:
 
 - `project/linear/generated/linear_import.csv`
 
+Optional repo automation path:
+
+```bash
+python3 project/linear/tools/import_linear_bundle.py \
+  --team-name elixir \
+  --manifest-json /tmp/service-request-portal-import-manifest.json \
+  --manifest-csv /tmp/service-request-portal-import-manifest.csv
+```
+
 Notes:
 
 - the strict CSV keeps `Status` blank so the target team defaults apply
+- if the target team default is not `Backlog`, move imported issues to
+  `Backlog` before review
 - descriptions include an `Import Metadata` section for milestone, labels,
   blocker context, and source file path
 - use `linear_import_rich.csv` to verify titles, order, milestone mapping, and
@@ -120,6 +140,13 @@ After import, use `project/linear/generated/linear_dependencies.csv` to apply
 
 Do not do this before the import exists, because the dependency file references
 ticket keys, while Linear blocker relations need actual imported issues.
+
+Optional repo automation path:
+
+```bash
+python3 project/linear/tools/link_linear_dependencies.py \
+  --manifest-json /tmp/service-request-portal-import-manifest.json
+```
 
 ## Recommended next automation step
 
@@ -150,8 +177,9 @@ Suggested WIP:
 
 Saved views to create in Linear:
 
-- `Ready`
-- `Blocked`
+- `Backlog`
+- `Todo`
+- `Blocked` filtered from dependency relations
 - `Root Issues`
 - `QA / Release`
 

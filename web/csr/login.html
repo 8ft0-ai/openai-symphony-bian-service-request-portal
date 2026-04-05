@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSR Staff Login</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="module" src="./login.js"></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="auth-layout">
+        <article class="auth-panel" aria-labelledby="csr-login-title">
+          <div>
+            <p class="eyebrow">CSR Staff Access</p>
+            <h1 id="csr-login-title">Sign in to the servicing queue.</h1>
+            <p class="intro">
+              This staff-only flow remains separate from customer authentication and grants
+              access only to protected CSR routes.
+            </p>
+          </div>
+
+          <form class="form-grid" data-csr-login-form novalidate>
+            <div class="field-stack">
+              <label class="field-label" for="staff-id">Staff ID</label>
+              <input
+                id="staff-id"
+                name="staffId"
+                type="text"
+                autocomplete="username"
+                placeholder="csr.queue.ops"
+                aria-describedby="login-feedback"
+                aria-invalid="false"
+                required
+              />
+            </div>
+
+            <div class="field-stack">
+              <label class="field-label" for="staff-password">Password</label>
+              <input
+                id="staff-password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="QueueReady!"
+                aria-describedby="login-feedback"
+                aria-invalid="false"
+                required
+              />
+            </div>
+
+            <button id="staff-login-button" type="submit">Sign in to CSR dashboard</button>
+          </form>
+
+          <p id="login-feedback" class="feedback" role="alert" hidden></p>
+
+          <a class="secondary-link" href="/">Return to portal entry</a>
+        </article>
+
+        <aside class="auth-panel helper-stack">
+          <div class="helper-card">
+            <p class="section-label">Validation credential</p>
+            <h2>Use the seeded CSR account for MVP testing.</h2>
+            <dl class="credential-list">
+              <div class="credential-row">
+                <dt>Staff ID</dt>
+                <dd data-demo-staff-id>csr.queue.ops</dd>
+              </div>
+              <div class="credential-row">
+                <dt>Password</dt>
+                <dd data-demo-password>QueueReady!</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="helper-card">
+            <p class="section-label">Why this route exists</p>
+            <p>
+              CSR staff sign in through dedicated URLs and a separate session key so future
+              customer authentication can remain isolated.
+            </p>
+            <p class="entry-note">Protected route: <code>/csr/dashboard.html</code></p>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSR Dashboard</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="module" src="./dashboard.js"></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="dashboard-layout">
+        <article class="dashboard-hero" aria-labelledby="csr-dashboard-title">
+          <div class="dashboard-topline">
+            <div class="dashboard-title-group">
+              <p class="eyebrow">CSR Dashboard</p>
+              <h1 id="csr-dashboard-title">Manual servicing starts here.</h1>
+              <p class="intro">
+                This protected dashboard is the authenticated landing point for CSR staff and
+                the future home of the cross-customer work queue.
+              </p>
+            </div>
+
+            <div class="session-chip">
+              <span data-csr-name></span>
+            </div>
+          </div>
+
+          <div class="dashboard-meta">
+            <div class="dashboard-card meta-item">
+              <strong>Staff ID</strong>
+              <span data-csr-staff-id></span>
+            </div>
+            <div class="dashboard-card meta-item">
+              <strong>Role</strong>
+              <span data-csr-role></span>
+            </div>
+            <div class="dashboard-card meta-item">
+              <strong>Auth boundary</strong>
+              <span>CSR-only session key and protected route guard</span>
+            </div>
+          </div>
+
+          <div class="dashboard-actions">
+            <a class="secondary-link" href="/">Portal entry</a>
+            <button type="button" data-csr-logout>Sign out</button>
+          </div>
+        </article>
+
+        <section class="dashboard-grid" aria-label="Operational dashboard panels">
+          <article class="dashboard-card">
+            <p class="section-label">Route protection</p>
+            <h2>Unauthenticated visitors are redirected to staff login.</h2>
+            <p>
+              The dashboard checks for a CSR session before rendering any staff-only content.
+            </p>
+          </article>
+
+          <article class="dashboard-card">
+            <p class="section-label">Queue readiness</p>
+            <h2>Queue delivery continues in CSR-003.</h2>
+            <ul class="queue-preview">
+              <li>Cross-customer request queue will render here next.</li>
+              <li>Search, filtering, and request detail screens remain blocked by auth.</li>
+              <li>Manual processing stays under CSR control only.</li>
+            </ul>
+          </article>
+
+          <article class="dashboard-card">
+            <p class="section-label">Session scope</p>
+            <h2>Customer authentication stays separate.</h2>
+            <p>
+              This dashboard is backed only by the CSR session module and does not share
+              credentials, routes, or storage with future customer flows.
+            </p>
+            <p class="dashboard-badge">MVP staff route established</p>
+          </article>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

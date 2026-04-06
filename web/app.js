@@ -1,99 +1,41 @@
-export function normalizeName(value) {
-  return value.trim();
-}
+import {
+  CSR_DASHBOARD_PATH,
+  CSR_LOGIN_PATH,
+  getCsrSession,
+} from "./csr/auth.js";
 
-export function isNameValid(value) {
-  return normalizeName(value).length > 0;
-}
+export function setupPortalLanding(doc = document, options = {}) {
+  const view = doc.defaultView;
+  const storage = options.storage ?? view?.sessionStorage ?? null;
+  const staffEntry = doc.querySelector("[data-staff-entry]");
+  const staffDescription = doc.querySelector("[data-staff-description]");
+  const activeStaff = doc.querySelector("[data-active-staff]");
 
-export function buildGreeting(name) {
-  return `Hello, ${name}`;
-}
-
-function setHiddenState(element, isHidden) {
-  element.hidden = isHidden;
-}
-
-function setValidationState(input, validationMessage, isInvalid) {
-  input.setAttribute("aria-invalid", String(isInvalid));
-  setHiddenState(validationMessage, !isInvalid);
-}
-
-export function setupGreetingForm(doc = document) {
-  const form = doc.querySelector("[data-greeting-form]");
-  const input = doc.querySelector("#name-input");
-  const submitButton = doc.querySelector("#greet-button");
-  const validationMessage = doc.querySelector("#validation-message");
-  const greetingOutput = doc.querySelector("#greeting-output");
-
-  if (!(form && input && submitButton && validationMessage && greetingOutput)) {
-    throw new Error("Greeting form markup is incomplete.");
+  if (!(staffEntry && staffDescription && activeStaff)) {
+    throw new Error("Portal landing markup is incomplete.");
   }
 
-  const syncButtonState = () => {
-    submitButton.disabled = !isNameValid(input.value);
-  };
+  const csrSession = getCsrSession(storage);
 
-  const clearValidation = () => {
-    validationMessage.textContent =
-      "Please enter your name before greeting yourself.";
-    setValidationState(input, validationMessage, false);
-  };
-
-  const showValidation = () => {
-    validationMessage.textContent =
-      "Please enter your name before greeting yourself.";
-    setValidationState(input, validationMessage, true);
-  };
-
-  const showGreeting = (message) => {
-    greetingOutput.textContent = message;
-    setHiddenState(greetingOutput, false);
-  };
-
-  const hideGreeting = () => {
-    greetingOutput.textContent = "";
-    setHiddenState(greetingOutput, true);
-  };
-
-  input.addEventListener("input", () => {
-    if (isNameValid(input.value)) {
-      clearValidation();
-    } else {
-      hideGreeting();
-    }
-
-    syncButtonState();
-  });
-
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-
-    const name = normalizeName(input.value);
-
-    if (!name) {
-      hideGreeting();
-      showValidation();
-      syncButtonState();
-      return;
-    }
-
-    clearValidation();
-    showGreeting(buildGreeting(name));
-    syncButtonState();
-  });
-
-  syncButtonState();
+  if (csrSession) {
+    staffEntry.href = CSR_DASHBOARD_PATH;
+    staffEntry.textContent = "Return to CSR dashboard";
+    staffDescription.textContent = `Continue as ${csrSession.name} from the protected staff dashboard.`;
+    activeStaff.hidden = false;
+    activeStaff.textContent = `${csrSession.name} is signed in as CSR staff`;
+  } else {
+    staffEntry.href = CSR_LOGIN_PATH;
+    activeStaff.hidden = true;
+    activeStaff.textContent = "";
+  }
 
   return {
-    form,
-    input,
-    submitButton,
-    validationMessage,
-    greetingOutput,
+    activeStaff,
+    staffDescription,
+    staffEntry,
   };
 }
 
 if (typeof document !== "undefined") {
-  setupGreetingForm(document);
+  setupPortalLanding(document);
 }

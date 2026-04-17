@@ -25,7 +25,17 @@ hooks:
     default_branch="${default_ref#refs/remotes/origin/}"
     default_branch="${default_branch:-main}"
     git switch -c "$workspace_branch" "origin/$default_branch" 2>/dev/null || git switch -c "$workspace_branch"
-    git clone --depth 1 https://github.com/openai/symphony .symphony
+    # Prefer the local Symphony fork during laptop development so new
+    # workspaces pick up committed runtime changes immediately without
+    # requiring a push; fall back to GitHub when the local checkout is
+    # unavailable.
+    symphony_local_repo="/Users/jan/dev/8ft0-ai/symphony"
+    symphony_remote_repo="https://github.com/8ft0-ai/symphony"
+    if [ -d "$symphony_local_repo/.git" ]; then
+      git clone "$symphony_local_repo" .symphony
+    else
+      git clone --depth 1 "$symphony_remote_repo" .symphony
+    fi
     printf '/.symphony/\n' >> .git/info/exclude
     if ! command -v mise >/dev/null 2>&1; then
       echo "Missing required tool: mise. Install it from https://mise.jdx.dev/ so Symphony can bootstrap the workspace-local Elixir toolchain." >&2
@@ -63,12 +73,14 @@ hooks:
       echo "Skipping workspace.before_remove; missing .symphony/elixir"
     fi
 agent:
-  max_concurrent_agents: 10
+  max_concurrent_agents: 2
   max_turns: 20
 codex:
-  command: codex --config model_reasoning_effort=xhigh --model gpt-5.4 app-server
+  #command: codex --config model_reasoning_effort=high --model gpt-5.4 app-server
+  command: codex --config model_reasoning_effort=medium --model gpt-5.1-codex-mini app-server 
   approval_policy: never
   thread_sandbox: workspace-write
+  stall_timeout_ms: 900000
   turn_sandbox_policy:
     type: workspaceWrite
     writableRoots:
@@ -122,6 +134,7 @@ The agent should be able to talk to Linear, either via a configured Linear MCP s
 
 - Start by determining the ticket's current status, then follow the matching flow for that status.
 - Start every task by opening the tracking workpad comment and bringing it up to date before doing new implementation work.
+- For workpad comment creation and edits, prefer `linear_graphql` (`commentCreate` / `commentUpdate`) or the documented update script fallback; do not use connector comment-save tools such as `mcp__linear__save_comment` for persistent workpad writes.
 - Spend extra effort up front on planning and verification design before implementation.
 - Reproduce first: always confirm the current behavior/issue signal before changing code so the fix target is explicit.
 - Keep ticket metadata current (state, checklist, acceptance criteria, links).
@@ -277,12 +290,14 @@ Use this only when completion is blocked by missing required tools or missing au
     - If the repo is still on `main`, `master`, `trunk`, or `develop`, create or switch to a fresh issue-scoped branch before making edits.
 2.  If current issue state is `Todo`, move it to `In Progress`; otherwise leave the current state unchanged.
 3.  Load the existing workpad comment and treat it as the active execution checklist.
-    - Edit it liberally whenever reality changes (scope, risks, validation approach, discovered tasks).
+    - Keep local notes during active implementation, then batch them into the workpad at stable checkpoints.
+    - Write workpad updates through `linear_graphql` (`commentCreate` / `commentUpdate`) or the documented update script fallback; do not use connector comment-save tools such as `mcp__linear__save_comment`.
 4.  Implement against the hierarchical TODOs and keep the comment current:
     - Check off completed items.
     - Add newly discovered items in the appropriate section.
     - Keep parent/child structure intact as scope evolves.
-    - Update the workpad immediately after each meaningful milestone (for example: reproduction complete, code change landed, validation run, review feedback addressed).
+    - Batch workpad updates at stable checkpoints only: kickoff plan sync, blocker discovery, pre-status-transition sync, and final handoff.
+    - Do not issue a workpad write after every intermediate milestone; accumulate local notes during active coding and validation, then publish one consolidated update at the next checkpoint.
     - Never leave completed work unchecked in the plan.
     - For tickets that started as `Todo` with an attached PR, run the full PR feedback sweep protocol immediately after kickoff and before new feature work.
 5.  Run validation/tests required for the scope.
@@ -378,6 +393,7 @@ Use this only when completion is blocked by missing required tools or missing au
 - If issue state is `Backlog`, do not modify it; wait for human to move to `Todo`.
 - Do not edit the issue body/description for planning or progress tracking.
 - Use exactly one persistent workpad comment (`## Codex Workpad`) per issue.
+- For persistent workpad writes, use `linear_graphql` (`commentCreate` / `commentUpdate`) first. Avoid connector comment-save tools for workpad updates because a hung save can stall the unattended turn.
 - If comment editing is unavailable in-session, use the update script. Only report blocked if both MCP editing and script-based editing are unavailable.
 - Temporary proof edits are allowed only for local verification and must be reverted before commit.
 - If out-of-scope improvements are found, create a separate Backlog issue rather

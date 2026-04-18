@@ -117,6 +117,11 @@ function buildInternalNote(timestamp) {
   }
 }
 
+function normalizeOptionalText(value) {
+  const normalizedValue = normalizeTextField(value)
+  return normalizedValue || null
+}
+
 export function toCustomerServicingOrder(servicingOrder) {
   const { internalNotes, ...customerFacingOrder } = servicingOrder
   return structuredClone(customerFacingOrder)
@@ -166,6 +171,69 @@ export function createServicingOrder({
     storedOrder,
     responseOrder: toCustomerServicingOrder(storedOrder),
   }
+}
+
+export function listServicingOrders({
+  authContext,
+  query = {},
+  store,
+}) {
+  const role = normalizeTextField(authContext?.role).toLowerCase()
+  const statusFilter = normalizeOptionalText(query.status)
+  const customerReferenceFilter = normalizeOptionalText(query.customerReference)
+
+  let orders
+
+  if (role === "csr") {
+    orders = store.list()
+  } else if (role === "customer") {
+    const authenticatedCustomerReference = normalizeOptionalText(
+      authContext?.customerReference,
+    )
+
+    if (!authenticatedCustomerReference) {
+      throw createRequestError(
+        401,
+        "Unauthorized",
+        "Customer-authenticated context is required.",
+      )
+    }
+
+    if (
+      customerReferenceFilter &&
+      customerReferenceFilter !== authenticatedCustomerReference
+    ) {
+      throw createRequestError(
+        403,
+        "Forbidden",
+        "Authenticated customer context does not match the requested customer reference.",
+      )
+    }
+
+    orders = store
+      .list()
+      .filter((order) => order.customerReference === authenticatedCustomerReference)
+  } else {
+    throw createRequestError(
+      401,
+      "Unauthorized",
+      "Authenticated CSR or customer context is required.",
+    )
+  }
+
+  if (customerReferenceFilter && role === "csr") {
+    orders = orders.filter((order) => order.customerReference === customerReferenceFilter)
+  }
+
+  if (statusFilter) {
+    orders = orders.filter((order) => order.servicingOrderStatus === statusFilter)
+  }
+
+  if (role === "customer") {
+    return orders.map(toCustomerServicingOrder)
+  }
+
+  return orders.map((order) => structuredClone(order))
 }
 
 export function serializeRequestError(error) {

@@ -25,14 +25,17 @@ hooks:
     default_branch="${default_ref#refs/remotes/origin/}"
     default_branch="${default_branch:-main}"
     git switch -c "$workspace_branch" "origin/$default_branch" 2>/dev/null || git switch -c "$workspace_branch"
-    # Prefer the local Symphony fork during laptop development so new
-    # workspaces pick up committed runtime changes immediately without
-    # requiring a push; fall back to GitHub when the local checkout is
-    # unavailable.
+    gitdir="$(git rev-parse --path-format=absolute --git-dir 2>/dev/null || true)"
+    if [ -n "$gitdir" ] && [ -d "$gitdir" ]; then
+      chmod -R a+rwX "$gitdir" 2>/dev/null || true
+    fi
+    # During local development, prefer a symlink to the local Symphony repo so
+    # all workspaces share the same runtime code while iterating quickly.
+    # Fall back to a clone only when the local checkout is unavailable.
     symphony_local_repo="/Users/jan/dev/8ft0-ai/symphony"
     symphony_remote_repo="https://github.com/8ft0-ai/symphony"
     if [ -d "$symphony_local_repo/.git" ]; then
-      git clone "$symphony_local_repo" .symphony
+      ln -s "$symphony_local_repo" .symphony
     else
       git clone --depth 1 "$symphony_remote_repo" .symphony
     fi
@@ -46,6 +49,21 @@ hooks:
     mise install
     mise exec -- mix deps.get
   before_run: |
+    if [ -x ./scripts/git-doctor.sh ]; then
+      ./scripts/git-doctor.sh "$PWD" || true
+    fi
+    symphony_local_repo="/Users/jan/dev/8ft0-ai/symphony"
+    if [ -d .symphony/.git ] && [ -d "$symphony_local_repo/.git" ] && [ ! -L .symphony ]; then
+      symphony_branch="$(git -C .symphony branch --show-current 2>/dev/null || true)"
+      symphony_branch="${symphony_branch:-main}"
+      if git -C .symphony fetch "$symphony_local_repo" "$symphony_branch" 2>/dev/null; then
+        git -C .symphony merge --ff-only FETCH_HEAD 2>/dev/null || true
+      fi
+    fi
+    gitdir="$(git rev-parse --path-format=absolute --git-dir 2>/dev/null || true)"
+    if [ -n "$gitdir" ] && [ -d "$gitdir" ]; then
+      chmod -R a+rwX "$gitdir" 2>/dev/null || true
+    fi
     current_branch="$(git branch --show-current 2>/dev/null || true)"
     workspace_name="$(basename "$PWD")"
     workspace_ticket="${workspace_name%@*}"
@@ -77,16 +95,12 @@ agent:
   max_turns: 20
 codex:
   #command: codex --config model_reasoning_effort=high --model gpt-5.4 app-server
-  command: codex --config model_reasoning_effort=medium --model gpt-5.1-codex-mini app-server 
+  command: codex --config model_reasoning_effort=medium --model gpt-5.3-codex app-server 
   approval_policy: never
-  thread_sandbox: workspace-write
+  thread_sandbox: danger-full-access
   stall_timeout_ms: 900000
   turn_sandbox_policy:
-    type: workspaceWrite
-    writableRoots:
-      - /Users/jan/dev/workspaces/symphony
-    readOnlyAccess:
-      type: fullAccess
+    type: dangerFullAccess
     networkAccess: true
     excludeTmpdirEnvVar: false
     excludeSlashTmp: false
@@ -123,6 +137,7 @@ Instructions:
 1. This is an unattended orchestration session. Never ask a human to perform follow-up actions.
 2. Only stop early for a true blocker (missing required auth/permissions/secrets). If blocked, record it in the workpad and move the issue according to workflow.
 3. Final message must report completed actions and blockers only. Do not include "next steps for user".
+4. In unattended runs (`approval_policy: never`), avoid MCP actions that require interactive elicitation (for example `mcp__playwright__browser_navigate`) unless pre-authorized by the environment.
 
 Work only in the provided repository copy. Do not touch any other path.
 
@@ -189,7 +204,8 @@ The agent should be able to talk to Linear, either via a configured Linear MCP s
    - `Duplicate` -> do nothing and shut down.
 4. Resolve branch, Git writability, and PR state from the local repo before reusing prior work.
    - Derive `current_branch` from `git branch --show-current`; treat the checked-out repo as the source of truth when it disagrees with Linear `gitBranchName`, workspace folder names, or prior workpad notes.
-   - Determine Git metadata writability with `git_dir="$(git rev-parse --git-dir 2>/dev/null || true)"` followed by `test -n "$git_dir" && test -w "$git_dir"`; do not probe writability by creating temporary files under `.git`.
+  - Run `./scripts/git-doctor.sh "$PWD"` before evaluating Git writability blockers; it auto-remediates writable flags/ACLs/owner bits where possible and exits non-zero only when metadata remains blocked.
+  - Determine Git metadata writability with `git_dir="$(git rev-parse --git-dir 2>/dev/null || true)"` followed by `test -n "$git_dir" && test -w "$git_dir"`; do not probe writability by creating temporary files under `.git`.
    - When checking for an existing PR, first use any PR already attached to the issue. Otherwise query GitHub with `gh pr list --state all --head "$current_branch" --json number,state,title,url`.
    - If the head-branch lookup returns no rows, run one fallback search by issue identifier, for example `gh pr list --state all --search "{{ issue.identifier }}" --json number,state,title,url`, before concluding no PR exists.
    - If a branch PR exists and is `CLOSED` or `MERGED`, treat prior branch work as non-reusable for this run.
@@ -280,6 +296,7 @@ Use this only when completion is blocked by missing required tools or missing au
   - what is missing,
   - why it blocks required acceptance/validation,
   - exact human action needed to unblock.
+- Treat `mcp_elicitation_required` from optional browser automation as non-blocking by default in unattended runs; switch to non-interactive validation evidence unless the ticket explicitly requires browser-media proof and no fallback can satisfy acceptance.
 - Keep the brief concise and action-oriented; do not add extra top-level comments outside the workpad.
 
 ## Step 2: Execution phase (Todo -> In Progress -> In Review)
@@ -307,6 +324,7 @@ Use this only when completion is blocked by missing required tools or missing au
     - Revert every temporary proof edit before commit/push.
     - Document these temporary proof steps and outcomes in the workpad `Validation`/`Notes` sections so reviewers can follow the evidence.
     - If app-touching, run `launch-app` validation and capture/upload media via `github-pr-media` before handoff.
+    - If `launch-app`/Playwright requires MCP elicitation in an unattended run, record the elicitation failure signal once, then continue with non-interactive evidence (targeted tests, HTTP probes, deterministic logs/screenshots from non-MCP tooling) unless browser-media proof is explicitly required by ticket acceptance.
     - Changes limited to `.symphony/`, docs, or other non-app files do not by themselves trigger app runtime validation.
     - For each acceptance criterion, capture the strongest practical artifact for the proof type used: targeted test output, command log, screenshot, video, uploaded file, or PR check link.
     - Post artifacts where reviewers can open them: upload to Linear when possible, use accessible PR-hosted media/links for GitHub review, and avoid relying on uncommitted local artifact files.
@@ -382,13 +400,14 @@ Use this only when completion is blocked by missing required tools or missing au
 - PR feedback sweep is complete and no actionable comments remain.
 - PR checks are green, branch is pushed, an open PR exists for that branch, and the PR is linked on the issue.
 - Required PR metadata is present (`symphony` label).
-- If app-touching, runtime validation/media requirements from `App runtime validation (required)` are complete.
+- If app-touching, runtime validation/media requirements from `App runtime validation (required)` are complete, or an unattended-run `mcp_elicitation_required` fallback path is documented with equivalent non-interactive evidence.
 
 ## Guardrails
 
 - If the branch PR is already closed/merged, do not reuse that branch or prior implementation state for continuation.
 - For closed/merged branch PRs, create a new branch from `origin/main` and restart from reproduction/planning as if starting fresh.
 - Do not test Git metadata writability by creating scratch files under `.git`; use `git rev-parse --git-dir` plus `test -w` instead.
+- Always attempt `./scripts/git-doctor.sh "$PWD"` once before declaring a `git_metadata_non_writable` blocker.
 - Do not treat the workspace-local `.symphony/elixir` helper checkout as application source when deciding scope, app ownership, or runtime validation requirements.
 - If issue state is `Backlog`, do not modify it; wait for human to move to `Todo`.
 - Do not edit the issue body/description for planning or progress tracking.

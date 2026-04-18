@@ -3,44 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Service Request Portal</title>
+    <title>Customer Service Request Portal</title>
     <link rel="stylesheet" href="./styles.css" />
     <script type="module" src="./app.js"></script>
   </head>
   <body>
-    <main class="page-shell portal-shell">
-      <section class="hero-panel" aria-labelledby="portal-title">
-        <p class="eyebrow">Service Request Portal MVP</p>
-        <h1 id="portal-title">Separate access paths for customers and CSR staff.</h1>
-        <p class="intro">
-          This release establishes the staff-only CSR sign-in flow and protected dashboard
-          without blending it into the future customer authentication experience.
-        </p>
-        <p class="status-pill" data-active-staff hidden></p>
-      </section>
-
-      <section class="entry-grid" aria-label="Portal access options">
-        <article class="entry-card entry-card-muted">
-          <p class="entry-label">Customer portal</p>
-          <h2>Customer authentication remains separate.</h2>
-          <p>
-            Customer sign-in is intentionally out of scope for this ticket and will arrive
-            through its own flow in CP-001.
-          </p>
-          <p class="entry-note">Planned next: customer login and dashboard.</p>
-        </article>
-
-        <article class="entry-card">
-          <p class="entry-label">CSR portal</p>
-          <h2>Staff servicing access is live.</h2>
-          <p data-staff-description>
-            Sign in with CSR staff credentials to reach the protected operational dashboard.
-          </p>
-          <a class="entry-link" data-staff-entry href="/csr/login.html">
-            Open CSR staff login
-          </a>
-        </article>
-      </section>
+    <main class="portal-shell" data-portal-root>
+      <noscript>
+        This customer portal requires JavaScript to establish the authenticated
+        session.
+      </noscript>
     </main>
   </body>
 </html>

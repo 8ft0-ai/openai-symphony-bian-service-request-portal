@@ -81,6 +81,48 @@ async function initiateRequest(baseUrl, payload, headers = {}) {
   }
 }
 
+async function listRequest(baseUrl, { query = "", headers = {} } = {}) {
+  const response = await fetch(`${baseUrl}/ServicingOrder${query}`, {
+    method: "GET",
+    headers,
+  })
+
+  return {
+    status: response.status,
+    body: await response.json(),
+  }
+}
+
+function createStoredOrder({
+  servicingOrderId,
+  customerReference,
+  customerName,
+  requestType,
+  servicingOrderStatus,
+  submittedDate,
+}) {
+  return {
+    servicingOrderId,
+    customerReference,
+    customerName,
+    requestType,
+    servicingOrderStatus,
+    submittedDate,
+    lastUpdateDate: submittedDate,
+    requestDetails: {
+      oldAddress: "100 Example Street, Sydney NSW 2000",
+      newAddress: "200 Updated Avenue, Sydney NSW 2000",
+    },
+    internalNotes: [
+      {
+        note: "Request submitted by customer.",
+        author: "System",
+        timestamp: submittedDate,
+      },
+    ],
+  }
+}
+
 for (const fixture of requestFixtures) {
   test(`creates a Pending servicing order for ${fixture.name}`, async () => {
     const now = () => "2026-03-28T00:30:00.000Z"
@@ -199,6 +241,190 @@ test("rejects mismatched customer context", async () => {
     assert.deepEqual(response.body, {
       error: "Forbidden",
       message: "Authenticated customer context does not match the request customer reference.",
+    })
+  })
+})
+
+test("returns servicing order queue data for CSR users", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_2001",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_2002",
+        customerReference: "CUST_22222",
+        customerName: "Riley Hart",
+        requestType: "Email Update",
+        servicingOrderStatus: "Completed",
+        submittedDate: "2026-04-02T00:00:00.000Z",
+      }),
+    )
+
+    const response = await listRequest(baseUrl, {
+      headers: {
+        "x-authenticated-role": "csr",
+      },
+    })
+
+    assert.equal(response.status, 200)
+    assert.equal(response.body.length, 2)
+    assert.deepEqual(
+      response.body.map((order) => ({
+        servicingOrderId: order.servicingOrderId,
+        customerReference: order.customerReference,
+        servicingOrderStatus: order.servicingOrderStatus,
+      })),
+      [
+        {
+          servicingOrderId: "SO_TEST_2001",
+          customerReference: "CUST_11111",
+          servicingOrderStatus: "Pending",
+        },
+        {
+          servicingOrderId: "SO_TEST_2002",
+          customerReference: "CUST_22222",
+          servicingOrderStatus: "Completed",
+        },
+      ],
+    )
+    assert.ok(Array.isArray(response.body[0].internalNotes))
+  })
+})
+
+test("supports status filtering for CSR queue retrieval", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_3001",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_3002",
+        customerReference: "CUST_22222",
+        customerName: "Riley Hart",
+        requestType: "Email Update",
+        servicingOrderStatus: "Completed",
+        submittedDate: "2026-04-02T00:00:00.000Z",
+      }),
+    )
+
+    const response = await listRequest(baseUrl, {
+      query: "?status=Pending",
+      headers: {
+        "x-authenticated-role": "csr",
+      },
+    })
+
+    assert.equal(response.status, 200)
+    assert.deepEqual(response.body.map((order) => order.servicingOrderId), ["SO_TEST_3001"])
+  })
+})
+
+test("rejects list retrieval without an authenticated role context", async () => {
+  await withApiServer(async ({ baseUrl }) => {
+    const response = await listRequest(baseUrl)
+
+    assert.equal(response.status, 401)
+    assert.deepEqual(response.body, {
+      error: "Unauthorized",
+      message: "Authenticated CSR or customer context is required.",
+    })
+  })
+})
+
+test("rejects customer list retrieval without customer reference context", async () => {
+  await withApiServer(async ({ baseUrl }) => {
+    const response = await listRequest(baseUrl, {
+      headers: {
+        "x-authenticated-role": "customer",
+      },
+    })
+
+    assert.equal(response.status, 401)
+    assert.deepEqual(response.body, {
+      error: "Unauthorized",
+      message: "Customer-authenticated context is required.",
+    })
+  })
+})
+
+test("returns only own servicing orders for customer history retrieval", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_4001",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_4002",
+        customerReference: "CUST_22222",
+        customerName: "Riley Hart",
+        requestType: "Email Update",
+        servicingOrderStatus: "Completed",
+        submittedDate: "2026-04-02T00:00:00.000Z",
+      }),
+    )
+
+    const response = await listRequest(baseUrl, {
+      headers: {
+        "x-authenticated-role": "customer",
+        "x-customer-reference": "CUST_11111",
+      },
+    })
+
+    assert.equal(response.status, 200)
+    assert.deepEqual(response.body.map((order) => order.servicingOrderId), ["SO_TEST_4001"])
+    assert.equal(response.body[0].customerReference, "CUST_11111")
+    assert.equal("internalNotes" in response.body[0], false)
+  })
+})
+
+test("rejects customer attempts to query another customer's servicing orders", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_5001",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+
+    const response = await listRequest(baseUrl, {
+      query: "?customerReference=CUST_22222",
+      headers: {
+        "x-authenticated-role": "customer",
+        "x-customer-reference": "CUST_11111",
+      },
+    })
+
+    assert.equal(response.status, 403)
+    assert.deepEqual(response.body, {
+      error: "Forbidden",
+      message:
+        "Authenticated customer context does not match the requested customer reference.",
     })
   })
 })

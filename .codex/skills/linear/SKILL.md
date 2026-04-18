@@ -241,6 +241,8 @@ query IssueTeamStates($id: String!) {
 
 Use `commentUpdate` through `linear_graphql`:
 
+For persistent workpad comments in unattended Symphony runs, prefer this path over connector comment-save tools. Batch local note changes and publish consolidated updates at stable checkpoints instead of rewriting the comment after every minor milestone.
+
 ```graphql
 mutation UpdateComment($id: String!, $body: String!) {
   commentUpdate(id: $id, input: { body: $body }) {
@@ -256,6 +258,8 @@ mutation UpdateComment($id: String!, $body: String!) {
 ### Create a comment
 
 Use `commentCreate` through `linear_graphql`:
+
+Use this when bootstrapping the single `## Codex Workpad` comment for an issue. In unattended runs, prefer this GraphQL path over connector comment-create/save helpers for persistent workpad writes.
 
 ```graphql
 mutation CreateComment($issueId: String!, $body: String!) {

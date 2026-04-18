@@ -148,6 +148,43 @@ python3 project/linear/tools/link_linear_dependencies.py \
   --manifest-json /tmp/service-request-portal-import-manifest.json
 ```
 
+## Step 6: Export dependency graphs
+
+Use the exporter to generate a project-wide dependency graph or a focused
+ticket subgraph.
+
+Offline export from the generated CSV:
+
+```bash
+python3 project/linear/tools/export_linear_dependency_graph.py \
+  --source csv \
+  --dependencies-csv project/linear/generated/linear_dependencies.csv
+```
+
+Live export from Linear relations:
+
+```bash
+python3 project/linear/tools/export_linear_dependency_graph.py \
+  --source linear \
+  --project-slug service-request-portal-mvp-7b4ee5582c2d
+```
+
+Focused ticket view with 2 hops of upstream/downstream context:
+
+```bash
+python3 project/linear/tools/export_linear_dependency_graph.py \
+  --source linear \
+  --project-slug service-request-portal-mvp-7b4ee5582c2d \
+  --issue CP-001 \
+  --depth 2
+```
+
+Output files land in `project/linear/generated/`:
+
+- `.mmd` for Mermaid embedding in Markdown
+- `.dot` for Graphviz editing
+- `.svg` for a static visual artifact
+
 ## Recommended next automation step
 
 Prepare the exact Linear project/milestone setup before building a dependency

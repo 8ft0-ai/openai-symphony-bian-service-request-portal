@@ -200,12 +200,21 @@ export function listServicingOrders({
   store,
 }) {
   const role = normalizeTextField(authContext?.role).toLowerCase()
+  const authenticatedCsrStaffId = normalizeOptionalText(authContext?.staffId)
   const statusFilter = normalizeOptionalText(query.status)
   const customerReferenceFilter = normalizeOptionalText(query.customerReference)
 
   let orders
 
   if (role === "csr") {
+    if (!authenticatedCsrStaffId) {
+      throw createRequestError(
+        401,
+        "Unauthorized",
+        "CSR-authenticated context is required.",
+      )
+    }
+
     orders = store.list()
   } else if (role === "customer") {
     const authenticatedCustomerReference = normalizeOptionalText(

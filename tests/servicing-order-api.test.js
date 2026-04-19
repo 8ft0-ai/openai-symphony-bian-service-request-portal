@@ -105,6 +105,28 @@ async function customerProfileRequest(baseUrl, { query = "", headers = {} } = {}
   }
 }
 
+async function updateRequest(
+  baseUrl,
+  servicingOrderId,
+  payload,
+  headers = {},
+) {
+  const response = await fetch(`${baseUrl}/ServicingOrder/${servicingOrderId}/Update`, {
+    method: "PUT",
+    headers: {
+      "content-type": "application/json",
+      "x-authenticated-role": "csr",
+      ...headers,
+    },
+    body: JSON.stringify(payload),
+  })
+
+  return {
+    status: response.status,
+    body: await response.json(),
+  }
+}
+
 function createStoredOrder({
   servicingOrderId,
   customerReference,
@@ -494,5 +516,136 @@ test("rejects CSR-authenticated access to customer profile endpoint", async () =
       error: "Forbidden",
       message: "Customer-only operation. CSR-authenticated context is not allowed.",
     })
+  })
+})
+
+test("allows CSR status update with internal note append for a valid transition", async () => {
+  const now = () => "2026-04-03T00:00:00.000Z"
+
+  await withApiServer(
+    async ({ baseUrl, store }) => {
+      store.create(
+        createStoredOrder({
+          servicingOrderId: "SO_TEST_6001",
+          customerReference: "CUST_11111",
+          customerName: "Alex Quinn",
+          requestType: "Address Update",
+          servicingOrderStatus: "Pending",
+          submittedDate: "2026-04-01T00:00:00.000Z",
+        }),
+      )
+
+      const response = await updateRequest(baseUrl, "SO_TEST_6001", {
+        servicingOrderStatus: "In Progress",
+        newInternalNote: {
+          note: "Verified update details with customer.",
+          author: "csr.queue.ops",
+        },
+      })
+
+      assert.equal(response.status, 200)
+      assert.equal(response.body.servicingOrderId, "SO_TEST_6001")
+      assert.equal(response.body.servicingOrderStatus, "In Progress")
+      assert.equal(response.body.lastUpdateDate, now())
+      assert.deepEqual(response.body.internalNotes.at(-1), {
+        note: "Verified update details with customer.",
+        author: "csr.queue.ops",
+        timestamp: now(),
+      })
+
+      const [storedOrder] = store.list()
+      assert.equal(storedOrder.servicingOrderStatus, "In Progress")
+      assert.equal(storedOrder.lastUpdateDate, now())
+      assert.deepEqual(storedOrder.internalNotes.at(-1), {
+        note: "Verified update details with customer.",
+        author: "csr.queue.ops",
+        timestamp: now(),
+      })
+    },
+    { now },
+  )
+})
+
+test("rejects invalid servicing order status transitions with conflict response", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_6002",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+
+    const response = await updateRequest(baseUrl, "SO_TEST_6002", {
+      servicingOrderStatus: "Completed",
+    })
+
+    assert.equal(response.status, 409)
+    assert.deepEqual(response.body, {
+      error: "Conflict",
+      message: "Invalid servicing order status transition from Pending to Completed.",
+    })
+    assert.equal(store.list()[0].servicingOrderStatus, "Pending")
+  })
+})
+
+test("rejects non-CSR update attempts", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_6003",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+
+    const response = await updateRequest(
+      baseUrl,
+      "SO_TEST_6003",
+      { servicingOrderStatus: "In Progress" },
+      { "x-authenticated-role": "customer", "x-customer-reference": "CUST_11111" },
+    )
+
+    assert.equal(response.status, 401)
+    assert.deepEqual(response.body, {
+      error: "Unauthorized",
+      message: "CSR-authenticated context is required.",
+    })
+  })
+})
+
+test("validates required internal note fields when note is supplied", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_6004",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "In Progress",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+
+    const response = await updateRequest(baseUrl, "SO_TEST_6004", {
+      newInternalNote: {
+        note: " ",
+        author: "",
+      },
+    })
+
+    assert.equal(response.status, 400)
+    assert.equal(response.body.error, "Bad Request")
+    assert.match(response.body.message, /failed validation/i)
+    assert.deepEqual(response.body.details, [
+      { field: "newInternalNote.note", message: "newInternalNote.note is required." },
+      { field: "newInternalNote.author", message: "newInternalNote.author is required." },
+    ])
   })
 })

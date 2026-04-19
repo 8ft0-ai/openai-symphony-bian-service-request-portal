@@ -3,6 +3,7 @@ import { pathToFileURL } from "node:url"
 
 import {
   createServicingOrder,
+  getServicingOrderById,
   getCustomerProfile,
   listServicingOrders,
   serializeRequestError,
@@ -103,6 +104,21 @@ function handleListRoute(request, response, dependencies, requestUrl) {
   }
 }
 
+function handleGetByIdRoute(request, response, dependencies, servicingOrderId) {
+  try {
+    const servicingOrder = getServicingOrderById({
+      authContext: buildAuthContext(request.headers),
+      servicingOrderId,
+      store: dependencies.store,
+    })
+
+    writeJson(response, 200, servicingOrder)
+  } catch (error) {
+    const statusCode = error.statusCode ?? 500
+    writeJson(response, statusCode, serializeRequestError(error))
+  }
+}
+
 function handleCustomerProfileRoute(request, response, requestUrl) {
   try {
     const customerProfile = getCustomerProfile({
@@ -121,6 +137,7 @@ function handleCustomerProfileRoute(request, response, requestUrl) {
 
 function routeRequest(request, response, dependencies) {
   const requestUrl = new URL(request.url, "http://127.0.0.1")
+  const servicingOrderDetailMatch = requestUrl.pathname.match(/^\/ServicingOrder\/(?!Initiate$)([^/]+)$/)
   const updateRouteMatch = requestUrl.pathname.match(/^\/ServicingOrder\/([^/]+)\/Update$/)
 
   if (updateRouteMatch && request.method === "PUT") {
@@ -155,10 +172,24 @@ function routeRequest(request, response, dependencies) {
     return
   }
 
+  if (servicingOrderDetailMatch && request.method === "GET") {
+    const servicingOrderId = decodeURIComponent(servicingOrderDetailMatch[1])
+    handleGetByIdRoute(request, response, dependencies, servicingOrderId)
+    return
+  }
+
   if (requestUrl.pathname === "/ServicingOrder") {
     writeJson(response, 405, {
       error: "Method Not Allowed",
       message: "Use GET for /ServicingOrder.",
+    })
+    return
+  }
+
+  if (servicingOrderDetailMatch) {
+    writeJson(response, 405, {
+      error: "Method Not Allowed",
+      message: "Use GET for /ServicingOrder/{servicingOrderId}.",
     })
     return
   }

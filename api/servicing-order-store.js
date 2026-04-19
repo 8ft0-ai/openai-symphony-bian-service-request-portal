@@ -13,8 +13,8 @@ export function createInMemoryServicingOrderStore(initialOrders = []) {
     },
 
     getById(servicingOrderId) {
-      const foundOrder = orders.find((order) => order.servicingOrderId === servicingOrderId)
-      return foundOrder ? structuredClone(foundOrder) : null
+      const matchingOrder = orders.find((order) => order.servicingOrderId === servicingOrderId)
+      return matchingOrder ? structuredClone(matchingOrder) : null
     },
 
     updateById(servicingOrderId, nextOrder) {

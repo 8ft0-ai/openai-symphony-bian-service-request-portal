@@ -93,6 +93,18 @@ async function listRequest(baseUrl, { query = "", headers = {} } = {}) {
   }
 }
 
+async function detailRequest(baseUrl, servicingOrderId, { headers = {} } = {}) {
+  const response = await fetch(`${baseUrl}/ServicingOrder/${encodeURIComponent(servicingOrderId)}`, {
+    method: "GET",
+    headers,
+  })
+
+  return {
+    status: response.status,
+    body: await response.json(),
+  }
+}
+
 async function customerProfileRequest(baseUrl, { query = "", headers = {} } = {}) {
   const response = await fetch(`${baseUrl}/CustomerProfile${query}`, {
     method: "GET",
@@ -458,6 +470,126 @@ test("rejects customer attempts to query another customer's servicing orders", a
     assert.deepEqual(response.body, {
       error: "Forbidden",
       message: "customerReference filtering is restricted to CSR-authenticated context.",
+    })
+  })
+})
+
+test("returns a single servicing order by id for CSR users with internal notes", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_6001",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+
+    const response = await detailRequest(baseUrl, "SO_TEST_6001", {
+      headers: {
+        "x-authenticated-role": "csr",
+      },
+    })
+
+    assert.equal(response.status, 200)
+    assert.equal(response.body.servicingOrderId, "SO_TEST_6001")
+    assert.ok(Array.isArray(response.body.internalNotes))
+    assert.equal(response.body.internalNotes.length, 1)
+  })
+})
+
+test("returns a single servicing order by id for owning customer without internal notes", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_6002",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+
+    const response = await detailRequest(baseUrl, "SO_TEST_6002", {
+      headers: {
+        "x-authenticated-role": "customer",
+        "x-customer-reference": "CUST_11111",
+      },
+    })
+
+    assert.equal(response.status, 200)
+    assert.equal(response.body.servicingOrderId, "SO_TEST_6002")
+    assert.equal(response.body.customerReference, "CUST_11111")
+    assert.equal("internalNotes" in response.body, false)
+  })
+})
+
+test("returns 404 for unknown servicing order id on detail retrieval", async () => {
+  await withApiServer(async ({ baseUrl }) => {
+    const response = await detailRequest(baseUrl, "SO_TEST_UNKNOWN", {
+      headers: {
+        "x-authenticated-role": "csr",
+      },
+    })
+
+    assert.equal(response.status, 404)
+    assert.deepEqual(response.body, {
+      error: "Not Found",
+      message: "Servicing order not found.",
+    })
+  })
+})
+
+test("rejects unauthenticated detail retrieval requests", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_6003",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+
+    const response = await detailRequest(baseUrl, "SO_TEST_6003")
+
+    assert.equal(response.status, 401)
+    assert.deepEqual(response.body, {
+      error: "Unauthorized",
+      message: "Authenticated CSR or customer context is required.",
+    })
+  })
+})
+
+test("rejects customer detail retrieval for another customer's servicing order", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_6004",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+
+    const response = await detailRequest(baseUrl, "SO_TEST_6004", {
+      headers: {
+        "x-authenticated-role": "customer",
+        "x-customer-reference": "CUST_22222",
+      },
+    })
+
+    assert.equal(response.status, 403)
+    assert.deepEqual(response.body, {
+      error: "Forbidden",
+      message: "Authenticated customer context does not match the requested servicing order.",
     })
   })
 })

@@ -6,6 +6,27 @@ const REQUEST_DETAIL_FIELDS = {
   "Email Update": ["oldEmailAddress", "newEmailAddress"],
 }
 
+const CUSTOMER_PROFILE_DIRECTORY = Object.freeze({
+  CUST_98765: Object.freeze({
+    customerName: "Jane Doe",
+    residentialAddress: "123 Old Street, Townsville, QLD 4810",
+    mobileNumber: "+61 2 1111 2222",
+    emailAddress: "jane.old@example.com",
+  }),
+  CUST_11111: Object.freeze({
+    customerName: "Alex Quinn",
+    residentialAddress: "100 Example Street, Sydney NSW 2000",
+    mobileNumber: "+61 400 111 111",
+    emailAddress: "alex.quinn@example.com",
+  }),
+  CUST_22222: Object.freeze({
+    customerName: "Riley Hart",
+    residentialAddress: "200 Updated Avenue, Sydney NSW 2000",
+    mobileNumber: "+61 400 222 222",
+    emailAddress: "riley.hart@example.com",
+  }),
+})
+
 function createRequestError(statusCode, error, message, details = []) {
   const requestError = new Error(message)
   requestError.statusCode = statusCode
@@ -200,13 +221,12 @@ export function listServicingOrders({
     }
 
     if (
-      customerReferenceFilter &&
-      customerReferenceFilter !== authenticatedCustomerReference
+      customerReferenceFilter
     ) {
       throw createRequestError(
         403,
         "Forbidden",
-        "Authenticated customer context does not match the requested customer reference.",
+        "customerReference filtering is restricted to CSR-authenticated context.",
       )
     }
 
@@ -234,6 +254,73 @@ export function listServicingOrders({
   }
 
   return orders.map((order) => structuredClone(order))
+}
+
+export function getCustomerProfile({
+  authContext,
+  query = {},
+  profileDirectory = CUSTOMER_PROFILE_DIRECTORY,
+}) {
+  const role = normalizeTextField(authContext?.role).toLowerCase()
+  const authenticatedCustomerReference = normalizeOptionalText(
+    authContext?.customerReference,
+  )
+  const requestedCustomerReference = normalizeOptionalText(query.customerReference)
+
+  if (!role) {
+    throw createRequestError(
+      401,
+      "Unauthorized",
+      "Customer-authenticated context is required.",
+    )
+  }
+
+  if (role !== "customer") {
+    throw createRequestError(
+      403,
+      "Forbidden",
+      "Customer-only operation. CSR-authenticated context is not allowed.",
+    )
+  }
+
+  if (!authenticatedCustomerReference) {
+    throw createRequestError(
+      401,
+      "Unauthorized",
+      "Customer-authenticated context is required.",
+    )
+  }
+
+  if (
+    requestedCustomerReference &&
+    requestedCustomerReference !== authenticatedCustomerReference
+  ) {
+    throw createRequestError(
+      403,
+      "Forbidden",
+      "Authenticated customer context does not match the requested customer reference.",
+    )
+  }
+
+  const profile = profileDirectory[authenticatedCustomerReference]
+
+  if (!profile) {
+    throw createRequestError(
+      404,
+      "Not Found",
+      "Customer profile not found for the authenticated customer context.",
+    )
+  }
+
+  return {
+    customerReference: authenticatedCustomerReference,
+    customerName: profile.customerName,
+    profile: {
+      residentialAddress: profile.residentialAddress,
+      mobileNumber: profile.mobileNumber,
+      emailAddress: profile.emailAddress,
+    },
+  }
 }
 
 export function serializeRequestError(error) {

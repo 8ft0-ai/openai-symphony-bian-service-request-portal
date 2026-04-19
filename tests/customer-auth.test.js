@@ -12,12 +12,12 @@ import {
 
 const pageMarkup = readFileSync(new URL("../web/index.html", import.meta.url), "utf8");
 
-function createFixture(hash = "#/customer/login") {
+function createFixture(hash = "#/customer/login", options = {}) {
   const dom = new JSDOM(pageMarkup, {
     url: `http://localhost/${hash}`,
   });
   const { document } = dom.window;
-  const app = setupCustomerPortal(document, dom.window);
+  const app = setupCustomerPortal(document, dom.window, options);
 
   return {
     app,
@@ -76,6 +76,9 @@ test("valid customer credentials establish a session and redirect to the dashboa
   assert.equal(session?.customerNumber, "100200300");
   assert.match(document.body.textContent, /Customer session established/);
   assert.match(document.body.textContent, /Jordan Lee/);
+  assert.match(document.body.textContent, /18 Harbour View Road, Sydney NSW 2000/);
+  assert.match(document.body.textContent, /\+61 412 555 019/);
+  assert.match(document.body.textContent, /jordan\.lee@examplebank\.test/);
 });
 
 test("invalid customer credentials are rejected and no session is created", () => {
@@ -136,4 +139,79 @@ test("an authenticated customer is redirected away from the login route to the d
   assert.equal(app.getCurrentRoute(), CUSTOMER_ROUTES.dashboard);
   assert.equal(window.location.hash, "#/customer/dashboard");
   assert.match(document.body.textContent, /existing customer session is active/);
+});
+
+test("dashboard gracefully handles partially populated profile fields", () => {
+  const customerDirectory = Object.freeze({
+    "123456789": Object.freeze({
+      accessCode: "112233",
+      state: "active",
+      customerName: "Taylor Quinn",
+      profile: Object.freeze({
+        residentialAddress: "",
+        mobileNumber: "   ",
+        emailAddress: "taylor.quinn@examplebank.test",
+      }),
+      requests: Object.freeze([]),
+      internalNotes: "CSR-only note",
+    }),
+  });
+  const { document, window, app } = createFixture("#/customer/login", {
+    customerDirectory,
+  });
+
+  submitLogin(document, window, {
+    customerNumber: "123456789",
+    accessCode: "112233",
+  });
+
+  const bodyText = document.body.textContent;
+
+  assert.equal(app.getCurrentRoute(), CUSTOMER_ROUTES.dashboard);
+  assert.match(bodyText, /taylor\.quinn@examplebank\.test/);
+  assert.equal((bodyText.match(/Not provided on file/g) || []).length, 2);
+  assert.doesNotMatch(bodyText, /CSR-only note/);
+});
+
+test("dashboard model exposes only the authenticated customer's source profile", () => {
+  const customerDirectory = Object.freeze({
+    "100200300": Object.freeze({
+      accessCode: "246810",
+      state: "active",
+      customerName: "Jordan Lee",
+      profile: Object.freeze({
+        residentialAddress: "18 Harbour View Road, Sydney NSW 2000",
+        mobileNumber: "+61 412 555 019",
+        emailAddress: "jordan.lee@examplebank.test",
+      }),
+      requests: Object.freeze([]),
+    }),
+    "900800700": Object.freeze({
+      accessCode: "334455",
+      state: "active",
+      customerName: "Riley Banks",
+      profile: Object.freeze({
+        residentialAddress: "99 Hidden Avenue, Perth WA 6000",
+        mobileNumber: "+61 499 000 999",
+        emailAddress: "riley.banks@examplebank.test",
+      }),
+      requests: Object.freeze([]),
+    }),
+  });
+  const { document, window, app } = createFixture("#/customer/login", {
+    customerDirectory,
+  });
+
+  submitLogin(document, window, {
+    customerNumber: "100200300",
+    accessCode: "246810",
+  });
+
+  const bodyText = document.body.textContent;
+
+  assert.equal(app.getCurrentRoute(), CUSTOMER_ROUTES.dashboard);
+  assert.match(bodyText, /Jordan Lee/);
+  assert.match(bodyText, /18 Harbour View Road, Sydney NSW 2000/);
+  assert.doesNotMatch(bodyText, /Riley Banks/);
+  assert.doesNotMatch(bodyText, /99 Hidden Avenue, Perth WA 6000/);
 });

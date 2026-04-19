@@ -256,6 +256,66 @@ export function listServicingOrders({
   return orders.map((order) => structuredClone(order))
 }
 
+export function getServicingOrderById({
+  authContext,
+  servicingOrderId,
+  store,
+}) {
+  const role = normalizeTextField(authContext?.role).toLowerCase()
+
+  if (!role) {
+    throw createRequestError(
+      401,
+      "Unauthorized",
+      "Authenticated CSR or customer context is required.",
+    )
+  }
+
+  const servicingOrder = store.getById(servicingOrderId)
+
+  if (!servicingOrder) {
+    throw createRequestError(
+      404,
+      "Not Found",
+      "Servicing order not found.",
+    )
+  }
+
+  if (role === "csr") {
+    return structuredClone(servicingOrder)
+  }
+
+  if (role === "customer") {
+    const authenticatedCustomerReference = normalizeOptionalText(
+      authContext?.customerReference,
+    )
+
+    if (!authenticatedCustomerReference) {
+      throw createRequestError(
+        401,
+        "Unauthorized",
+        "Customer-authenticated context is required.",
+      )
+    }
+
+    if (servicingOrder.customerReference !== authenticatedCustomerReference) {
+      throw createRequestError(
+        403,
+        "Forbidden",
+        "Authenticated customer context does not match the requested servicing order.",
+      )
+    }
+
+    return toCustomerServicingOrder(servicingOrder)
+  }
+
+  throw createRequestError(
+    401,
+    "Unauthorized",
+    "Authenticated CSR or customer context is required.",
+  )
+}
+
 export function getCustomerProfile({
   authContext,
   query = {},

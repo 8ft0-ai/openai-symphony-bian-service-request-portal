@@ -6,6 +6,20 @@ const REQUEST_DETAIL_FIELDS = {
   "Email Update": ["oldEmailAddress", "newEmailAddress"],
 }
 
+const ALLOWED_SERVICING_ORDER_STATUSES = new Set([
+  "Pending",
+  "In Progress",
+  "Completed",
+  "Rejected",
+])
+
+const VALID_STATUS_TRANSITIONS = Object.freeze({
+  Pending: new Set(["In Progress"]),
+  "In Progress": new Set(["Completed", "Rejected"]),
+  Completed: new Set(),
+  Rejected: new Set(),
+})
+
 const CUSTOMER_PROFILE_DIRECTORY = Object.freeze({
   CUST_98765: Object.freeze({
     customerName: "Jane Doe",
@@ -141,6 +155,84 @@ function buildInternalNote(timestamp) {
 function normalizeOptionalText(value) {
   const normalizedValue = normalizeTextField(value)
   return normalizedValue || null
+}
+
+function validateUpdateInternalNote(newInternalNote, details) {
+  if (!isObject(newInternalNote)) {
+    details.push({
+      field: "newInternalNote",
+      message: "newInternalNote must be an object when supplied.",
+    })
+    return null
+  }
+
+  return {
+    note: validateRequiredText(newInternalNote.note, "newInternalNote.note", details),
+    author: validateRequiredText(newInternalNote.author, "newInternalNote.author", details),
+  }
+}
+
+function validateUpdatePayload(payload) {
+  if (!isObject(payload)) {
+    throw createRequestError(
+      400,
+      "Bad Request",
+      "The update payload must be a JSON object.",
+      [{ field: "body", message: "A JSON object body is required." }],
+    )
+  }
+
+  const details = []
+  const requestedStatus = normalizeOptionalText(payload.servicingOrderStatus)
+  const hasInternalNote = payload.newInternalNote !== undefined && payload.newInternalNote !== null
+
+  if (!requestedStatus && !hasInternalNote) {
+    details.push({
+      field: "body",
+      message: "At least one of servicingOrderStatus or newInternalNote is required.",
+    })
+  }
+
+  if (requestedStatus && !ALLOWED_SERVICING_ORDER_STATUSES.has(requestedStatus)) {
+    details.push({
+      field: "servicingOrderStatus",
+      message: `servicingOrderStatus must be one of: ${Array.from(ALLOWED_SERVICING_ORDER_STATUSES).join(", ")}.`,
+    })
+  }
+
+  const internalNote = hasInternalNote
+    ? validateUpdateInternalNote(payload.newInternalNote, details)
+    : null
+
+  if (details.length > 0) {
+    throw createRequestError(
+      400,
+      "Bad Request",
+      "The update payload failed validation.",
+      details,
+    )
+  }
+
+  return {
+    requestedStatus,
+    internalNote,
+  }
+}
+
+function assertValidStatusTransition(currentStatus, nextStatus) {
+  if (!nextStatus || nextStatus === currentStatus) {
+    return
+  }
+
+  const allowedTransitions = VALID_STATUS_TRANSITIONS[currentStatus] ?? new Set()
+
+  if (!allowedTransitions.has(nextStatus)) {
+    throw createRequestError(
+      409,
+      "Conflict",
+      `Invalid servicing order status transition from ${currentStatus} to ${nextStatus}.`,
+    )
+  }
 }
 
 export function toCustomerServicingOrder(servicingOrder) {
@@ -381,6 +473,60 @@ export function getCustomerProfile({
       emailAddress: profile.emailAddress,
     },
   }
+}
+
+export function updateServicingOrder({
+  authContext,
+  servicingOrderId,
+  payload,
+  store,
+  now = () => new Date().toISOString(),
+}) {
+  const role = normalizeTextField(authContext?.role).toLowerCase()
+
+  if (role !== "csr") {
+    throw createRequestError(
+      401,
+      "Unauthorized",
+      "CSR-authenticated context is required.",
+    )
+  }
+
+  const existingOrder = store.getById(servicingOrderId)
+
+  if (!existingOrder) {
+    throw createRequestError(
+      404,
+      "Not Found",
+      "Servicing order not found.",
+    )
+  }
+
+  const { requestedStatus, internalNote } = validateUpdatePayload(payload)
+  assertValidStatusTransition(existingOrder.servicingOrderStatus, requestedStatus)
+
+  const timestamp = now()
+  const updatedOrder = structuredClone(existingOrder)
+
+  if (requestedStatus) {
+    updatedOrder.servicingOrderStatus = requestedStatus
+  }
+
+  if (internalNote) {
+    updatedOrder.internalNotes.push({
+      note: internalNote.note,
+      author: internalNote.author,
+      timestamp,
+    })
+  }
+
+  if (requestedStatus || internalNote) {
+    updatedOrder.lastUpdateDate = timestamp
+  }
+
+  const storedOrder = store.updateById(servicingOrderId, updatedOrder)
+
+  return structuredClone(storedOrder)
 }
 
 export function serializeRequestError(error) {

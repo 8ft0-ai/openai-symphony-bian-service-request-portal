@@ -7,6 +7,7 @@ import {
   getCustomerProfile,
   listServicingOrders,
   serializeRequestError,
+  updateServicingOrder,
 } from "./servicing-order-service.js"
 import { createInMemoryServicingOrderStore } from "./servicing-order-store.js"
 
@@ -67,6 +68,24 @@ async function handleInitiateRoute(request, response, dependencies) {
   }
 }
 
+async function handleUpdateRoute(request, response, dependencies, servicingOrderId) {
+  try {
+    const payload = await readJsonBody(request)
+    const updatedOrder = updateServicingOrder({
+      authContext: buildAuthContext(request.headers),
+      servicingOrderId,
+      payload,
+      store: dependencies.store,
+      now: dependencies.now,
+    })
+
+    writeJson(response, 200, updatedOrder)
+  } catch (error) {
+    const statusCode = error.statusCode ?? 500
+    writeJson(response, statusCode, serializeRequestError(error))
+  }
+}
+
 function handleListRoute(request, response, dependencies, requestUrl) {
   try {
     const servicingOrders = listServicingOrders({
@@ -119,6 +138,21 @@ function handleCustomerProfileRoute(request, response, requestUrl) {
 function routeRequest(request, response, dependencies) {
   const requestUrl = new URL(request.url, "http://127.0.0.1")
   const servicingOrderDetailMatch = requestUrl.pathname.match(/^\/ServicingOrder\/(?!Initiate$)([^/]+)$/)
+  const updateRouteMatch = requestUrl.pathname.match(/^\/ServicingOrder\/([^/]+)\/Update$/)
+
+  if (updateRouteMatch && request.method === "PUT") {
+    const servicingOrderId = decodeURIComponent(updateRouteMatch[1])
+    void handleUpdateRoute(request, response, dependencies, servicingOrderId)
+    return
+  }
+
+  if (updateRouteMatch) {
+    writeJson(response, 405, {
+      error: "Method Not Allowed",
+      message: "Use PUT for /ServicingOrder/{servicingOrderId}/Update.",
+    })
+    return
+  }
 
   if (requestUrl.pathname === "/CustomerProfile" && request.method === "GET") {
     handleCustomerProfileRoute(request, response, requestUrl)

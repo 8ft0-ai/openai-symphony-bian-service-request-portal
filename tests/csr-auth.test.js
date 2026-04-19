@@ -75,6 +75,19 @@ function createDashboardFixture({ session = null } = {}) {
   };
 }
 
+function createDashboardFixtureWithCustomerSession({
+  customerSession = null,
+  session = null,
+} = {}) {
+  const fixture = createDashboardFixture({ session });
+
+  if (customerSession) {
+    fixture.sessionStorage.setItem("customerPortal.session", JSON.stringify(customerSession));
+  }
+
+  return fixture;
+}
+
 function dispatchInput(field, Event, value) {
   field.value = value;
   field.dispatchEvent(new Event("input", { bubbles: true }));
@@ -162,6 +175,23 @@ test("an authenticated CSR can render the dashboard and sign out again", () => {
 
   assert.equal(sessionStorage.getItem(CSR_SESSION_STORAGE_KEY), null);
   assert.equal(getNavigatedTo(), buildCsrLoginUrl({ signedOut: "1" }));
+});
+
+test("a customer-authenticated session does not grant CSR dashboard access", () => {
+  const { getNavigatedTo, session } = createDashboardFixtureWithCustomerSession({
+    customerSession: {
+      role: "customer",
+      customerNumber: "100200300",
+      customerName: "Jordan Lee",
+      authenticatedAt: "2026-04-19T00:00:00.000Z",
+    },
+  });
+
+  assert.equal(session, null);
+  assert.equal(
+    getNavigatedTo(),
+    buildCsrLoginUrl({ next: CSR_DASHBOARD_PATH, reason: "auth-required" }),
+  );
 });
 
 test("an existing CSR session skips the login screen and returns directly to the dashboard", () => {

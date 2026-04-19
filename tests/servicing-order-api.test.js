@@ -93,6 +93,18 @@ async function listRequest(baseUrl, { query = "", headers = {} } = {}) {
   }
 }
 
+async function customerProfileRequest(baseUrl, { query = "", headers = {} } = {}) {
+  const response = await fetch(`${baseUrl}/CustomerProfile${query}`, {
+    method: "GET",
+    headers,
+  })
+
+  return {
+    status: response.status,
+    body: await response.json(),
+  }
+}
+
 function createStoredOrder({
   servicingOrderId,
   customerReference,
@@ -423,8 +435,64 @@ test("rejects customer attempts to query another customer's servicing orders", a
     assert.equal(response.status, 403)
     assert.deepEqual(response.body, {
       error: "Forbidden",
+      message: "customerReference filtering is restricted to CSR-authenticated context.",
+    })
+  })
+})
+
+test("returns only the authenticated customer's profile data", async () => {
+  await withApiServer(async ({ baseUrl }) => {
+    const response = await customerProfileRequest(baseUrl, {
+      headers: {
+        "x-authenticated-role": "customer",
+        "x-customer-reference": "CUST_98765",
+      },
+    })
+
+    assert.equal(response.status, 200)
+    assert.deepEqual(response.body, {
+      customerReference: "CUST_98765",
+      customerName: "Jane Doe",
+      profile: {
+        residentialAddress: "123 Old Street, Townsville, QLD 4810",
+        mobileNumber: "+61 2 1111 2222",
+        emailAddress: "jane.old@example.com",
+      },
+    })
+  })
+})
+
+test("rejects customer attempts to retrieve another customer's profile", async () => {
+  await withApiServer(async ({ baseUrl }) => {
+    const response = await customerProfileRequest(baseUrl, {
+      query: "?customerReference=CUST_22222",
+      headers: {
+        "x-authenticated-role": "customer",
+        "x-customer-reference": "CUST_11111",
+      },
+    })
+
+    assert.equal(response.status, 403)
+    assert.deepEqual(response.body, {
+      error: "Forbidden",
       message:
         "Authenticated customer context does not match the requested customer reference.",
+    })
+  })
+})
+
+test("rejects CSR-authenticated access to customer profile endpoint", async () => {
+  await withApiServer(async ({ baseUrl }) => {
+    const response = await customerProfileRequest(baseUrl, {
+      headers: {
+        "x-authenticated-role": "csr",
+      },
+    })
+
+    assert.equal(response.status, 403)
+    assert.deepEqual(response.body, {
+      error: "Forbidden",
+      message: "Customer-only operation. CSR-authenticated context is not allowed.",
     })
   })
 })

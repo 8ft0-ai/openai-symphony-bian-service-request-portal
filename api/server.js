@@ -3,6 +3,7 @@ import { pathToFileURL } from "node:url"
 
 import {
   createServicingOrder,
+  getCustomerProfile,
   listServicingOrders,
   serializeRequestError,
 } from "./servicing-order-service.js"
@@ -83,8 +84,37 @@ function handleListRoute(request, response, dependencies, requestUrl) {
   }
 }
 
+function handleCustomerProfileRoute(request, response, requestUrl) {
+  try {
+    const customerProfile = getCustomerProfile({
+      authContext: buildAuthContext(request.headers),
+      query: {
+        customerReference: requestUrl.searchParams.get("customerReference"),
+      },
+    })
+
+    writeJson(response, 200, customerProfile)
+  } catch (error) {
+    const statusCode = error.statusCode ?? 500
+    writeJson(response, statusCode, serializeRequestError(error))
+  }
+}
+
 function routeRequest(request, response, dependencies) {
   const requestUrl = new URL(request.url, "http://127.0.0.1")
+
+  if (requestUrl.pathname === "/CustomerProfile" && request.method === "GET") {
+    handleCustomerProfileRoute(request, response, requestUrl)
+    return
+  }
+
+  if (requestUrl.pathname === "/CustomerProfile") {
+    writeJson(response, 405, {
+      error: "Method Not Allowed",
+      message: "Use GET for /CustomerProfile.",
+    })
+    return
+  }
 
   if (requestUrl.pathname === "/ServicingOrder" && request.method === "GET") {
     handleListRoute(request, response, dependencies, requestUrl)

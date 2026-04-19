@@ -11,5 +11,10 @@ export function createInMemoryServicingOrderStore(initialOrders = []) {
     list() {
       return orders.map((order) => structuredClone(order))
     },
+
+    getById(servicingOrderId) {
+      const matchingOrder = orders.find((order) => order.servicingOrderId === servicingOrderId)
+      return matchingOrder ? structuredClone(matchingOrder) : null
+    },
   }
 }

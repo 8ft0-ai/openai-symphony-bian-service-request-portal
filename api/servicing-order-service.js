@@ -20,6 +20,26 @@ const VALID_STATUS_TRANSITIONS = Object.freeze({
   Rejected: new Set(),
 })
 
+const INITIATE_AUTOMATION_CONTROL_MESSAGES = Object.freeze({
+  servicingOrderStatus:
+    "servicingOrderStatus is system-controlled and remains Pending until CSR action.",
+  autoComplete:
+    "autoComplete is not supported. Servicing orders remain Pending until CSR action.",
+  autoApplyProfileChanges:
+    "autoApplyProfileChanges is not supported. Profile changes must be processed manually by CSR.",
+  triggerDownstreamProfileUpdate:
+    "triggerDownstreamProfileUpdate is not supported. Profile changes must be processed manually by CSR.",
+})
+
+const UPDATE_AUTOMATION_CONTROL_MESSAGES = Object.freeze({
+  autoComplete:
+    "autoComplete is not supported. Status updates require explicit CSR action.",
+  autoApplyProfileChanges:
+    "autoApplyProfileChanges is not supported. Profile changes must be processed manually by CSR.",
+  triggerDownstreamProfileUpdate:
+    "triggerDownstreamProfileUpdate is not supported. Profile changes must be processed manually by CSR.",
+})
+
 const CUSTOMER_PROFILE_DIRECTORY = Object.freeze({
   CUST_98765: Object.freeze({
     customerName: "Jane Doe",
@@ -90,6 +110,14 @@ function validateRequestDetails(requestType, requestDetails, details) {
   )
 }
 
+function validateManualOnlyPayloadControls(payload, details, controlMessages) {
+  for (const [field, message] of Object.entries(controlMessages)) {
+    if (payload[field] !== undefined) {
+      details.push({ field, message })
+    }
+  }
+}
+
 function validateInitiatePayload(payload) {
   if (!isObject(payload)) {
     throw createRequestError(
@@ -122,6 +150,7 @@ function validateInitiatePayload(payload) {
     payload.requestDetails,
     details,
   )
+  validateManualOnlyPayloadControls(payload, details, INITIATE_AUTOMATION_CONTROL_MESSAGES)
 
   if (details.length > 0) {
     throw createRequestError(
@@ -203,6 +232,7 @@ function validateUpdatePayload(payload) {
   const internalNote = hasInternalNote
     ? validateUpdateInternalNote(payload.newInternalNote, details)
     : null
+  validateManualOnlyPayloadControls(payload, details, UPDATE_AUTOMATION_CONTROL_MESSAGES)
 
   if (details.length > 0) {
     throw createRequestError(
@@ -217,6 +247,24 @@ function validateUpdatePayload(payload) {
     requestedStatus,
     internalNote,
   }
+}
+
+function assertDownstreamProfileAutomationDisabled(downstreamProfileUpdateGateway, action) {
+  if (downstreamProfileUpdateGateway === undefined || downstreamProfileUpdateGateway === null) {
+    return
+  }
+
+  throw createRequestError(
+    409,
+    "Conflict",
+    `Automated downstream profile updates are disabled for ${action}. Manual CSR processing is required.`,
+    [
+      {
+        field: "downstreamProfileUpdateGateway",
+        message: "Remove downstream profile update automation from the portal flow.",
+      },
+    ],
+  )
 }
 
 function assertValidStatusTransition(currentStatus, nextStatus) {
@@ -246,6 +294,7 @@ export function createServicingOrder({
   store,
   now = () => new Date().toISOString(),
   generateId = defaultGenerateId,
+  downstreamProfileUpdateGateway,
 }) {
   if (!authContext || authContext.role !== "customer" || !authContext.customerReference) {
     throw createRequestError(
@@ -264,6 +313,11 @@ export function createServicingOrder({
       "Authenticated customer context does not match the request customer reference.",
     )
   }
+
+  assertDownstreamProfileAutomationDisabled(
+    downstreamProfileUpdateGateway,
+    "request submission",
+  )
 
   const timestamp = now()
   const servicingOrder = {
@@ -490,6 +544,7 @@ export function updateServicingOrder({
   payload,
   store,
   now = () => new Date().toISOString(),
+  downstreamProfileUpdateGateway,
 }) {
   const role = normalizeTextField(authContext?.role).toLowerCase()
 
@@ -510,6 +565,11 @@ export function updateServicingOrder({
       "Servicing order not found.",
     )
   }
+
+  assertDownstreamProfileAutomationDisabled(
+    downstreamProfileUpdateGateway,
+    "servicing order update",
+  )
 
   const { requestedStatus, internalNote } = validateUpdatePayload(payload)
   assertValidStatusTransition(existingOrder.servicingOrderStatus, requestedStatus)

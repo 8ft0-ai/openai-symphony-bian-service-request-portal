@@ -139,6 +139,29 @@ async function updateRequest(
   }
 }
 
+function expectedErrorCode(status) {
+  return {
+    400: "bad_request",
+    401: "unauthorized",
+    403: "forbidden",
+    404: "not_found",
+    405: "method_not_allowed",
+    409: "conflict",
+    500: "internal_server_error",
+  }[status]
+}
+
+function assertErrorResponse(response, { status, error, message, details = [] }) {
+  assert.equal(response.status, status)
+  assert.deepEqual(response.body, {
+    status,
+    code: expectedErrorCode(status),
+    error,
+    message,
+    details,
+  })
+}
+
 function createStoredOrder({
   servicingOrderId,
   customerReference,
@@ -219,16 +242,18 @@ test("returns validation errors for missing required fields", async () => {
       },
     })
 
-    assert.equal(response.status, 400)
-    assert.equal(response.body.error, "Bad Request")
-    assert.match(response.body.message, /failed validation/i)
-    assert.deepEqual(response.body.details, [
-      { field: "customerName", message: "customerName is required." },
-      {
-        field: "requestDetails.newAddress",
-        message: "requestDetails.newAddress is required.",
-      },
-    ])
+    assertErrorResponse(response, {
+      status: 400,
+      error: "Bad Request",
+      message: "The initiate payload failed validation.",
+      details: [
+        { field: "customerName", message: "customerName is required." },
+        {
+          field: "requestDetails.newAddress",
+          message: "requestDetails.newAddress is required.",
+        },
+      ],
+    })
   })
 })
 
@@ -244,13 +269,17 @@ test("rejects unsupported request types", async () => {
       },
     })
 
-    assert.equal(response.status, 400)
-    assert.deepEqual(response.body.details, [
-      {
-        field: "requestType",
-        message: "requestType must be one of: Address Update, Phone Update, Email Update.",
-      },
-    ])
+    assertErrorResponse(response, {
+      status: 400,
+      error: "Bad Request",
+      message: "The initiate payload failed validation.",
+      details: [
+        {
+          field: "requestType",
+          message: "requestType must be one of: Address Update, Phone Update, Email Update.",
+        },
+      ],
+    })
   })
 })
 
@@ -265,8 +294,8 @@ test("rejects unauthenticated requests", async () => {
       },
     )
 
-    assert.equal(response.status, 401)
-    assert.deepEqual(response.body, {
+    assertErrorResponse(response, {
+      status: 401,
       error: "Unauthorized",
       message: "Customer-authenticated context is required.",
     })
@@ -283,8 +312,8 @@ test("rejects mismatched customer context", async () => {
       },
     )
 
-    assert.equal(response.status, 403)
-    assert.deepEqual(response.body, {
+    assertErrorResponse(response, {
+      status: 403,
       error: "Forbidden",
       message: "Authenticated customer context does not match the request customer reference.",
     })
@@ -386,8 +415,8 @@ test("rejects list retrieval without an authenticated role context", async () =>
   await withApiServer(async ({ baseUrl }) => {
     const response = await listRequest(baseUrl)
 
-    assert.equal(response.status, 401)
-    assert.deepEqual(response.body, {
+    assertErrorResponse(response, {
+      status: 401,
       error: "Unauthorized",
       message: "Authenticated CSR or customer context is required.",
     })
@@ -402,8 +431,8 @@ test("rejects CSR list retrieval without staff authentication context", async ()
       },
     })
 
-    assert.equal(response.status, 401)
-    assert.deepEqual(response.body, {
+    assertErrorResponse(response, {
+      status: 401,
       error: "Unauthorized",
       message: "CSR-authenticated context is required.",
     })
@@ -418,8 +447,8 @@ test("rejects customer list retrieval without customer reference context", async
       },
     })
 
-    assert.equal(response.status, 401)
-    assert.deepEqual(response.body, {
+    assertErrorResponse(response, {
+      status: 401,
       error: "Unauthorized",
       message: "Customer-authenticated context is required.",
     })
@@ -484,8 +513,8 @@ test("rejects customer attempts to query another customer's servicing orders", a
       },
     })
 
-    assert.equal(response.status, 403)
-    assert.deepEqual(response.body, {
+    assertErrorResponse(response, {
+      status: 403,
       error: "Forbidden",
       message: "customerReference filtering is restricted to CSR-authenticated context.",
     })
@@ -553,8 +582,8 @@ test("returns 404 for unknown servicing order id on detail retrieval", async () 
       },
     })
 
-    assert.equal(response.status, 404)
-    assert.deepEqual(response.body, {
+    assertErrorResponse(response, {
+      status: 404,
       error: "Not Found",
       message: "Servicing order not found.",
     })
@@ -576,8 +605,8 @@ test("rejects unauthenticated detail retrieval requests", async () => {
 
     const response = await detailRequest(baseUrl, "SO_TEST_6003")
 
-    assert.equal(response.status, 401)
-    assert.deepEqual(response.body, {
+    assertErrorResponse(response, {
+      status: 401,
       error: "Unauthorized",
       message: "Authenticated CSR or customer context is required.",
     })
@@ -604,8 +633,8 @@ test("rejects customer detail retrieval for another customer's servicing order",
       },
     })
 
-    assert.equal(response.status, 403)
-    assert.deepEqual(response.body, {
+    assertErrorResponse(response, {
+      status: 403,
       error: "Forbidden",
       message: "Authenticated customer context does not match the requested servicing order.",
     })
@@ -644,8 +673,8 @@ test("rejects customer attempts to retrieve another customer's profile", async (
       },
     })
 
-    assert.equal(response.status, 403)
-    assert.deepEqual(response.body, {
+    assertErrorResponse(response, {
+      status: 403,
       error: "Forbidden",
       message:
         "Authenticated customer context does not match the requested customer reference.",
@@ -661,8 +690,8 @@ test("rejects CSR-authenticated access to customer profile endpoint", async () =
       },
     })
 
-    assert.equal(response.status, 403)
-    assert.deepEqual(response.body, {
+    assertErrorResponse(response, {
+      status: 403,
       error: "Forbidden",
       message: "Customer-only operation. CSR-authenticated context is not allowed.",
     })
@@ -733,8 +762,8 @@ test("rejects invalid servicing order status transitions with conflict response"
       servicingOrderStatus: "Completed",
     })
 
-    assert.equal(response.status, 409)
-    assert.deepEqual(response.body, {
+    assertErrorResponse(response, {
+      status: 409,
       error: "Conflict",
       message: "Invalid servicing order status transition from Pending to Completed.",
     })
@@ -762,8 +791,8 @@ test("rejects non-CSR update attempts", async () => {
       { "x-authenticated-role": "customer", "x-customer-reference": "CUST_11111" },
     )
 
-    assert.equal(response.status, 401)
-    assert.deepEqual(response.body, {
+    assertErrorResponse(response, {
+      status: 401,
       error: "Unauthorized",
       message: "CSR-authenticated context is required.",
     })
@@ -790,12 +819,75 @@ test("validates required internal note fields when note is supplied", async () =
       },
     })
 
-    assert.equal(response.status, 400)
-    assert.equal(response.body.error, "Bad Request")
-    assert.match(response.body.message, /failed validation/i)
-    assert.deepEqual(response.body.details, [
-      { field: "newInternalNote.note", message: "newInternalNote.note is required." },
-      { field: "newInternalNote.author", message: "newInternalNote.author is required." },
-    ])
+    assertErrorResponse(response, {
+      status: 400,
+      error: "Bad Request",
+      message: "The update payload failed validation.",
+      details: [
+        { field: "newInternalNote.note", message: "newInternalNote.note is required." },
+        { field: "newInternalNote.author", message: "newInternalNote.author is required." },
+      ],
+    })
+  })
+})
+
+test("returns standardized bad request payload for malformed JSON", async () => {
+  await withApiServer(async ({ baseUrl }) => {
+    const response = await fetch(`${baseUrl}/ServicingOrder/Initiate`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-authenticated-role": "customer",
+        "x-customer-reference": "CUST_98765",
+      },
+      body: "{not-valid-json}",
+    })
+
+    const body = await response.json()
+    assertErrorResponse(
+      { status: response.status, body },
+      {
+        status: 400,
+        error: "Bad Request",
+        message: "Request body must be valid JSON.",
+        details: [{ field: "body", message: "Malformed JSON payload." }],
+      },
+    )
+  })
+})
+
+test("returns standardized method-not-allowed payload for route mismatch", async () => {
+  await withApiServer(async ({ baseUrl }) => {
+    const response = await fetch(`${baseUrl}/ServicingOrder/Initiate`, {
+      method: "GET",
+    })
+
+    const body = await response.json()
+    assertErrorResponse(
+      { status: response.status, body },
+      {
+        status: 405,
+        error: "Method Not Allowed",
+        message: "Use POST for /ServicingOrder/Initiate.",
+      },
+    )
+  })
+})
+
+test("returns standardized not-found payload for unknown routes", async () => {
+  await withApiServer(async ({ baseUrl }) => {
+    const response = await fetch(`${baseUrl}/unknown-route`, {
+      method: "GET",
+    })
+
+    const body = await response.json()
+    assertErrorResponse(
+      { status: response.status, body },
+      {
+        status: 404,
+        error: "Not Found",
+        message: "Route not found.",
+      },
+    )
   })
 })

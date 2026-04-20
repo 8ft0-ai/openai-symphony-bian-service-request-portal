@@ -41,9 +41,20 @@ const CUSTOMER_PROFILE_DIRECTORY = Object.freeze({
   }),
 })
 
-function createRequestError(statusCode, error, message, details = []) {
+const DEFAULT_ERROR_CODES = Object.freeze({
+  400: "bad_request",
+  401: "unauthorized",
+  403: "forbidden",
+  404: "not_found",
+  405: "method_not_allowed",
+  409: "conflict",
+  500: "internal_server_error",
+})
+
+export function createRequestError(statusCode, error, message, details = [], code) {
   const requestError = new Error(message)
   requestError.statusCode = statusCode
+  requestError.code = code ?? DEFAULT_ERROR_CODES[statusCode] ?? "internal_server_error"
   requestError.error = error
   requestError.details = details
   return requestError
@@ -539,13 +550,14 @@ export function updateServicingOrder({
 }
 
 export function serializeRequestError(error) {
+  const statusCode = error.statusCode ?? 500
+
   const body = {
+    status: statusCode,
+    code: error.code ?? DEFAULT_ERROR_CODES[statusCode] ?? "internal_server_error",
     error: error.error ?? "Internal Server Error",
     message: error.message ?? "Unexpected error.",
-  }
-
-  if (Array.isArray(error.details) && error.details.length > 0) {
-    body.details = error.details
+    details: Array.isArray(error.details) ? error.details : [],
   }
 
   return body

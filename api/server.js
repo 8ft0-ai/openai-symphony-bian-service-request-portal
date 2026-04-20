@@ -2,6 +2,7 @@ import http from "node:http"
 import { pathToFileURL } from "node:url"
 
 import {
+  createRequestError,
   createServicingOrder,
   getServicingOrderById,
   getCustomerProfile,
@@ -29,6 +30,11 @@ function writeJson(response, statusCode, body) {
   response.end(JSON.stringify(body))
 }
 
+function writeError(response, error) {
+  const statusCode = error.statusCode ?? 500
+  writeJson(response, statusCode, serializeRequestError(error))
+}
+
 async function readJsonBody(request) {
   let body = ""
 
@@ -43,11 +49,12 @@ async function readJsonBody(request) {
   try {
     return JSON.parse(body)
   } catch {
-    throw Object.assign(new Error("Request body must be valid JSON."), {
-      statusCode: 400,
-      error: "Bad Request",
-      details: [{ field: "body", message: "Malformed JSON payload." }],
-    })
+    throw createRequestError(
+      400,
+      "Bad Request",
+      "Request body must be valid JSON.",
+      [{ field: "body", message: "Malformed JSON payload." }],
+    )
   }
 }
 
@@ -64,8 +71,7 @@ async function handleInitiateRoute(request, response, dependencies) {
 
     writeJson(response, 201, responseOrder)
   } catch (error) {
-    const statusCode = error.statusCode ?? 500
-    writeJson(response, statusCode, serializeRequestError(error))
+    writeError(response, error)
   }
 }
 
@@ -82,8 +88,7 @@ async function handleUpdateRoute(request, response, dependencies, servicingOrder
 
     writeJson(response, 200, updatedOrder)
   } catch (error) {
-    const statusCode = error.statusCode ?? 500
-    writeJson(response, statusCode, serializeRequestError(error))
+    writeError(response, error)
   }
 }
 
@@ -100,8 +105,7 @@ function handleListRoute(request, response, dependencies, requestUrl) {
 
     writeJson(response, 200, servicingOrders)
   } catch (error) {
-    const statusCode = error.statusCode ?? 500
-    writeJson(response, statusCode, serializeRequestError(error))
+    writeError(response, error)
   }
 }
 
@@ -115,8 +119,7 @@ function handleGetByIdRoute(request, response, dependencies, servicingOrderId) {
 
     writeJson(response, 200, servicingOrder)
   } catch (error) {
-    const statusCode = error.statusCode ?? 500
-    writeJson(response, statusCode, serializeRequestError(error))
+    writeError(response, error)
   }
 }
 
@@ -131,8 +134,7 @@ function handleCustomerProfileRoute(request, response, requestUrl) {
 
     writeJson(response, 200, customerProfile)
   } catch (error) {
-    const statusCode = error.statusCode ?? 500
-    writeJson(response, statusCode, serializeRequestError(error))
+    writeError(response, error)
   }
 }
 
@@ -148,10 +150,14 @@ function routeRequest(request, response, dependencies) {
   }
 
   if (updateRouteMatch) {
-    writeJson(response, 405, {
-      error: "Method Not Allowed",
-      message: "Use PUT for /ServicingOrder/{servicingOrderId}/Update.",
-    })
+    writeError(
+      response,
+      createRequestError(
+        405,
+        "Method Not Allowed",
+        "Use PUT for /ServicingOrder/{servicingOrderId}/Update.",
+      ),
+    )
     return
   }
 
@@ -161,10 +167,10 @@ function routeRequest(request, response, dependencies) {
   }
 
   if (requestUrl.pathname === "/CustomerProfile") {
-    writeJson(response, 405, {
-      error: "Method Not Allowed",
-      message: "Use GET for /CustomerProfile.",
-    })
+    writeError(
+      response,
+      createRequestError(405, "Method Not Allowed", "Use GET for /CustomerProfile."),
+    )
     return
   }
 
@@ -180,18 +186,22 @@ function routeRequest(request, response, dependencies) {
   }
 
   if (requestUrl.pathname === "/ServicingOrder") {
-    writeJson(response, 405, {
-      error: "Method Not Allowed",
-      message: "Use GET for /ServicingOrder.",
-    })
+    writeError(
+      response,
+      createRequestError(405, "Method Not Allowed", "Use GET for /ServicingOrder."),
+    )
     return
   }
 
   if (servicingOrderDetailMatch) {
-    writeJson(response, 405, {
-      error: "Method Not Allowed",
-      message: "Use GET for /ServicingOrder/{servicingOrderId}.",
-    })
+    writeError(
+      response,
+      createRequestError(
+        405,
+        "Method Not Allowed",
+        "Use GET for /ServicingOrder/{servicingOrderId}.",
+      ),
+    )
     return
   }
 
@@ -201,17 +211,14 @@ function routeRequest(request, response, dependencies) {
   }
 
   if (requestUrl.pathname === "/ServicingOrder/Initiate") {
-    writeJson(response, 405, {
-      error: "Method Not Allowed",
-      message: "Use POST for /ServicingOrder/Initiate.",
-    })
+    writeError(
+      response,
+      createRequestError(405, "Method Not Allowed", "Use POST for /ServicingOrder/Initiate."),
+    )
     return
   }
 
-  writeJson(response, 404, {
-    error: "Not Found",
-    message: "Route not found.",
-  })
+  writeError(response, createRequestError(404, "Not Found", "Route not found."))
 }
 
 export function createApiServer({

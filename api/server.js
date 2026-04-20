@@ -18,6 +18,7 @@ function getHeaderValue(value) {
 function buildAuthContext(headers) {
   return {
     role: getHeaderValue(headers["x-authenticated-role"])?.trim(),
+    staffId: getHeaderValue(headers["x-csr-staff-id"])?.trim(),
     customerReference: getHeaderValue(headers["x-customer-reference"])?.trim(),
     customerName: getHeaderValue(headers["x-customer-name"])?.trim(),
   }

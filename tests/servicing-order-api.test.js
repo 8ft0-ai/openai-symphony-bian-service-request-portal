@@ -317,6 +317,7 @@ test("returns servicing order queue data for CSR users", async () => {
     const response = await listRequest(baseUrl, {
       headers: {
         "x-authenticated-role": "csr",
+        "x-csr-staff-id": "csr.queue.ops",
       },
     })
 
@@ -372,6 +373,7 @@ test("supports status filtering for CSR queue retrieval", async () => {
       query: "?status=Pending",
       headers: {
         "x-authenticated-role": "csr",
+        "x-csr-staff-id": "csr.queue.ops",
       },
     })
 
@@ -388,6 +390,22 @@ test("rejects list retrieval without an authenticated role context", async () =>
     assert.deepEqual(response.body, {
       error: "Unauthorized",
       message: "Authenticated CSR or customer context is required.",
+    })
+  })
+})
+
+test("rejects CSR list retrieval without staff authentication context", async () => {
+  await withApiServer(async ({ baseUrl }) => {
+    const response = await listRequest(baseUrl, {
+      headers: {
+        "x-authenticated-role": "csr",
+      },
+    })
+
+    assert.equal(response.status, 401)
+    assert.deepEqual(response.body, {
+      error: "Unauthorized",
+      message: "CSR-authenticated context is required.",
     })
   })
 })

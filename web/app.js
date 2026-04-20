@@ -28,14 +28,27 @@ const CUSTOMER_DIRECTORY = Object.freeze({
       Object.freeze({
         id: "SR-1042",
         type: "Address update",
+        submittedDate: "2026-04-12T09:15:00.000Z",
         status: "Pending",
       }),
       Object.freeze({
         id: "SR-1028",
         type: "Email update",
+        submittedDate: "2026-04-07T03:40:00.000Z",
         status: "Completed",
       }),
     ]),
+  }),
+  "555666777": Object.freeze({
+    accessCode: "112233",
+    state: "active",
+    customerName: "Taylor Brooks",
+    profile: Object.freeze({
+      residentialAddress: "77 River Road, Brisbane QLD 4000",
+      mobileNumber: "+61 419 555 077",
+      emailAddress: "taylor.brooks@examplebank.test",
+    }),
+    requests: Object.freeze([]),
   }),
   "300200100": Object.freeze({
     accessCode: "864200",
@@ -62,6 +75,16 @@ class CustomerAuthError extends Error {
     this.name = "CustomerAuthError";
     this.code = code;
   }
+}
+
+function formatSubmittedDate(value) {
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.valueOf())) {
+    return "Unavailable";
+  }
+
+  return parsedDate.toISOString().slice(0, 10);
 }
 
 function escapeHtml(value) {
@@ -333,14 +356,28 @@ function buildDashboardMarkup({ model, noticeMessage }) {
         <article class="request-card">
           <p class="request-id">${escapeHtml(request.id)}</p>
           <h3>${escapeHtml(request.type)}</h3>
+          <p class="request-submitted-date">
+            <span>Submitted</span>
+            <strong>${escapeHtml(formatSubmittedDate(request.submittedDate))}</strong>
+          </p>
           <p class="request-status">
             <span>Status</span>
             <strong>${escapeHtml(request.status)}</strong>
           </p>
+          <a class="request-detail-link" href="#/customer/requests/${encodeURIComponent(request.id)}">
+            View request detail
+          </a>
         </article>
       `,
     )
     .join("");
+  const requestHistoryMarkup =
+    requestCards ||
+    `
+      <p class="request-empty-state" role="status">
+        No servicing requests have been submitted yet.
+      </p>
+    `;
 
   return `
     <section class="portal-layout portal-layout-dashboard" aria-labelledby="customer-dashboard-title">
@@ -389,7 +426,7 @@ function buildDashboardMarkup({ model, noticeMessage }) {
           <p class="section-label">Customer-visible request history</p>
           <h2 id="request-history-title">Recent servicing requests</h2>
           <div class="request-list">
-            ${requestCards}
+            ${requestHistoryMarkup}
           </div>
         </section>
       </div>

@@ -225,6 +225,7 @@ input:focus {
 }
 
 .session-chip span,
+.request-submitted-date span,
 .request-status span,
 .profile-list dt {
   display: block;
@@ -281,6 +282,7 @@ input:focus {
 
 .request-card h3,
 .request-id,
+.request-submitted-date,
 .request-status {
   margin: 0;
 }
@@ -290,12 +292,36 @@ input:focus {
   font-weight: 700;
 }
 
+.request-submitted-date,
 .request-status {
   margin-top: 0.85rem;
 }
 
+.request-submitted-date strong,
 .request-status strong {
   font-size: 1.05rem;
+}
+
+.request-detail-link {
+  display: inline-flex;
+  margin-top: 0.95rem;
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.request-detail-link:hover,
+.request-detail-link:focus-visible {
+  text-decoration: underline;
+}
+
+.request-empty-state {
+  margin: 0;
+  padding: 1rem 1.1rem;
+  border: 1px dashed var(--line);
+  border-radius: 1rem;
+  color: var(--muted);
+  background: var(--panel-strong);
 }
 
 @media (max-width: 900px) {

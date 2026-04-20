@@ -137,3 +137,54 @@ test("an authenticated customer is redirected away from the login route to the d
   assert.equal(window.location.hash, "#/customer/dashboard");
   assert.match(document.body.textContent, /existing customer session is active/);
 });
+
+test("request history rows include type, submitted date, status, and detail links", () => {
+  const { document, window } = createFixture();
+
+  submitLogin(document, window, {
+    customerNumber: "100200300",
+    accessCode: "246810",
+  });
+
+  const requestCards = document.querySelectorAll(".request-card");
+  const submittedDates = Array.from(
+    document.querySelectorAll(".request-submitted-date strong"),
+    (node) => node.textContent?.trim(),
+  );
+  const statusValues = Array.from(
+    document.querySelectorAll(".request-status strong"),
+    (node) => node.textContent?.trim(),
+  );
+  const detailLinks = Array.from(
+    document.querySelectorAll(".request-detail-link"),
+    (node) => node.getAttribute("href"),
+  );
+
+  assert.equal(requestCards.length, 2);
+  assert.deepEqual(submittedDates, ["2026-04-12", "2026-04-07"]);
+  assert.deepEqual(statusValues, ["Pending", "Completed"]);
+  assert.deepEqual(detailLinks, [
+    "#/customer/requests/SR-1042",
+    "#/customer/requests/SR-1028",
+  ]);
+  assert.match(document.body.textContent, /Address update/);
+  assert.match(document.body.textContent, /Email update/);
+});
+
+test("request history renders an empty state when the authenticated customer has no requests", () => {
+  const { document, window } = createFixture();
+
+  submitLogin(document, window, {
+    customerNumber: "555666777",
+    accessCode: "112233",
+  });
+
+  const emptyState = document.querySelector(".request-empty-state");
+  const requestCards = document.querySelectorAll(".request-card");
+
+  assert.equal(requestCards.length, 0);
+  assert.equal(
+    emptyState?.textContent?.trim(),
+    "No servicing requests have been submitted yet.",
+  );
+});

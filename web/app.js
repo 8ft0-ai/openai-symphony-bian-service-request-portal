@@ -12,6 +12,8 @@ const REDIRECT_MESSAGES = Object.freeze({
   sessionRestored: "An existing customer session is active. Redirecting to the dashboard.",
 });
 
+const PROFILE_VALUE_FALLBACK = "Not provided on file";
+
 const CUSTOMER_DIRECTORY = Object.freeze({
   "100200300": Object.freeze({
     accessCode: "246810",
@@ -102,10 +104,13 @@ export function normalizeAccessCode(value) {
   return String(value).trim();
 }
 
-export function authenticateCustomer({ customerNumber, accessCode }) {
+export function authenticateCustomer(
+  { customerNumber, accessCode },
+  customerDirectory = CUSTOMER_DIRECTORY,
+) {
   const normalizedCustomerNumber = normalizeCustomerNumber(customerNumber);
   const normalizedAccessCode = normalizeAccessCode(accessCode);
-  const customerRecord = CUSTOMER_DIRECTORY[normalizedCustomerNumber];
+  const customerRecord = customerDirectory[normalizedCustomerNumber];
 
   if (!(customerRecord && customerRecord.accessCode === normalizedAccessCode)) {
     return {
@@ -189,9 +194,12 @@ export function requireCustomerSession(storage) {
   return session;
 }
 
-export function getCustomerDashboardModel(storage) {
+export function getCustomerDashboardModel(
+  storage,
+  customerDirectory = CUSTOMER_DIRECTORY,
+) {
   const session = requireCustomerSession(storage);
-  const customerRecord = CUSTOMER_DIRECTORY[session.customerNumber];
+  const customerRecord = customerDirectory[session.customerNumber];
 
   if (!(customerRecord && customerRecord.state === "active")) {
     clearCustomerSession(storage);
@@ -208,6 +216,15 @@ export function getCustomerDashboardModel(storage) {
     profile: customerRecord.profile,
     requests: customerRecord.requests,
   };
+}
+
+export function formatProfileValue(value) {
+  if (value === null || value === undefined) {
+    return PROFILE_VALUE_FALLBACK;
+  }
+
+  const normalized = String(value).trim();
+  return normalized.length > 0 ? normalized : PROFILE_VALUE_FALLBACK;
 }
 
 export function normalizeCustomerRoute(route) {
@@ -392,15 +409,15 @@ function buildDashboardMarkup({ model, noticeMessage }) {
           <dl class="profile-list">
             <div>
               <dt>Residential address</dt>
-              <dd>${escapeHtml(model.profile.residentialAddress)}</dd>
+              <dd>${escapeHtml(formatProfileValue(model.profile.residentialAddress))}</dd>
             </div>
             <div>
               <dt>Mobile number</dt>
-              <dd>${escapeHtml(model.profile.mobileNumber)}</dd>
+              <dd>${escapeHtml(formatProfileValue(model.profile.mobileNumber))}</dd>
             </div>
             <div>
               <dt>Email address</dt>
-              <dd>${escapeHtml(model.profile.emailAddress)}</dd>
+              <dd>${escapeHtml(formatProfileValue(model.profile.emailAddress))}</dd>
             </div>
           </dl>
         </section>
@@ -417,7 +434,8 @@ function buildDashboardMarkup({ model, noticeMessage }) {
   `;
 }
 
-export function setupCustomerPortal(doc = document, win = window) {
+export function setupCustomerPortal(doc = document, win = window, options = {}) {
+  const customerDirectory = options.customerDirectory || CUSTOMER_DIRECTORY;
   const root = doc.querySelector("[data-portal-root]");
 
   if (!root) {
@@ -444,7 +462,7 @@ export function setupCustomerPortal(doc = document, win = window) {
     }
 
     if (resolvedRoute.route === CUSTOMER_ROUTES.dashboard) {
-      const dashboardModel = getCustomerDashboardModel(storage);
+      const dashboardModel = getCustomerDashboardModel(storage, customerDirectory);
       doc.title = "Customer Dashboard | Service Request Portal";
       root.innerHTML = buildDashboardMarkup({
         model: dashboardModel,
@@ -488,7 +506,10 @@ export function setupCustomerPortal(doc = document, win = window) {
     const formData = new win.FormData(form);
     const customerNumber = String(formData.get("customerNumber") || "");
     const accessCode = String(formData.get("accessCode") || "");
-    const authResult = authenticateCustomer({ customerNumber, accessCode });
+    const authResult = authenticateCustomer(
+      { customerNumber, accessCode },
+      customerDirectory,
+    );
 
     viewState.customerNumber = normalizeCustomerNumber(customerNumber);
 

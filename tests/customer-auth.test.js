@@ -312,3 +312,24 @@ test("unauthenticated customer request detail route redirects to login", () => {
   assert.equal(window.location.hash, "#/customer/login");
   assert.match(document.body.textContent, /bank-approved customer credentials/);
 });
+
+test("customer request detail route blocks access to requests outside the authenticated customer session", () => {
+  const { document, window } = createFixture();
+
+  submitLogin(document, window, {
+    customerNumber: "555666777",
+    accessCode: "112233",
+  });
+
+  window.location.hash = "#/customer/requests/SR-1042";
+  window.dispatchEvent(new window.HashChangeEvent("hashchange"));
+
+  const bodyText = document.body.textContent.replace(/\s+/g, " ");
+
+  assert.equal(window.location.hash, "#/customer/requests/SR-1042");
+  assert.match(bodyText, /Servicing request detail/);
+  assert.match(bodyText, /Request not found/);
+  assert.match(bodyText, /is not available in this customer session/);
+  assert.doesNotMatch(bodyText, /Address Update/);
+  assert.doesNotMatch(bodyText, /Jordan Lee/);
+});

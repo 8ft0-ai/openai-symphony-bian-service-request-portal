@@ -462,6 +462,17 @@ input:focus {
   background: var(--panel-strong);
 }
 
+.request-history-list {
+  margin: 1rem 0 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.request-history-item {
+  color: var(--ink);
+}
+
 @media (max-width: 900px) {
   .portal-layout-login,
   .dashboard-grid {

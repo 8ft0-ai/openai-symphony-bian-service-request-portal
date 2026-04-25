@@ -254,6 +254,38 @@ test("rejects unsupported request types", async () => {
   })
 })
 
+test("rejects auto-completion and profile-update automation controls on submission", async () => {
+  await withApiServer(async ({ baseUrl }) => {
+    const response = await initiateRequest(baseUrl, {
+      customerReference: "CUST_98765",
+      customerName: "Jane Doe",
+      requestType: "Address Update",
+      requestDetails: {
+        oldAddress: "123 Old Street, Townsville, QLD 4810",
+        newAddress: "456 New Avenue, Parramatta, NSW 2150",
+      },
+      servicingOrderStatus: "Completed",
+      autoApplyProfileChanges: true,
+    })
+
+    assert.equal(response.status, 400)
+    assert.equal(response.body.error, "Bad Request")
+    assert.match(response.body.message, /failed validation/i)
+    assert.deepEqual(response.body.details, [
+      {
+        field: "servicingOrderStatus",
+        message:
+          "servicingOrderStatus is system-controlled and remains Pending until CSR action.",
+      },
+      {
+        field: "autoApplyProfileChanges",
+        message:
+          "autoApplyProfileChanges is not supported. Profile changes must be processed manually by CSR.",
+      },
+    ])
+  })
+})
+
 test("rejects unauthenticated requests", async () => {
   await withApiServer(async ({ baseUrl }) => {
     const response = await initiateRequest(
@@ -797,5 +829,37 @@ test("validates required internal note fields when note is supplied", async () =
       { field: "newInternalNote.note", message: "newInternalNote.note is required." },
       { field: "newInternalNote.author", message: "newInternalNote.author is required." },
     ])
+  })
+})
+
+test("rejects downstream profile automation controls on update", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_6005",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+
+    const response = await updateRequest(baseUrl, "SO_TEST_6005", {
+      servicingOrderStatus: "In Progress",
+      autoApplyProfileChanges: true,
+    })
+
+    assert.equal(response.status, 400)
+    assert.equal(response.body.error, "Bad Request")
+    assert.match(response.body.message, /failed validation/i)
+    assert.deepEqual(response.body.details, [
+      {
+        field: "autoApplyProfileChanges",
+        message:
+          "autoApplyProfileChanges is not supported. Profile changes must be processed manually by CSR.",
+      },
+    ])
+    assert.equal(store.list()[0].servicingOrderStatus, "Pending")
   })
 })

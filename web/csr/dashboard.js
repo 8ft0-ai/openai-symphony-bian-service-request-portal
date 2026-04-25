@@ -28,13 +28,17 @@ function setQueueStatus(statusNode, tone, message) {
   statusNode.textContent = message;
 }
 
-function getQueueRequestUrl(apiBaseUrl, statusFilter = null) {
+function buildQueueRequestUrl(apiBaseUrl, { status = null, servicingOrderId = null } = {}) {
   const queueUrl = apiBaseUrl
     ? new URL("/ServicingOrder", apiBaseUrl)
     : new URL("/ServicingOrder", "http://localhost");
 
-  if (statusFilter) {
-    queueUrl.searchParams.set("status", statusFilter);
+  if (status) {
+    queueUrl.searchParams.set("status", status);
+  }
+
+  if (servicingOrderId) {
+    queueUrl.searchParams.set("servicingOrderId", servicingOrderId);
   }
 
   if (apiBaseUrl) {
@@ -42,6 +46,14 @@ function getQueueRequestUrl(apiBaseUrl, statusFilter = null) {
   }
 
   return `${queueUrl.pathname}${queueUrl.search}`;
+}
+
+function normalizeServicingOrderId(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
 function getRequestDetailUrl(servicingOrderId) {
@@ -59,16 +71,17 @@ function createQueueCell(doc, value, className) {
   return cell;
 }
 
-function renderQueueRows(doc, queueBody, servicingOrders) {
+function renderQueueRows(
+  doc,
+  queueBody,
+  servicingOrders,
+  { emptyMessage = "No servicing requests are currently waiting in the queue." } = {},
+) {
   queueBody.replaceChildren();
 
   if (!Array.isArray(servicingOrders) || servicingOrders.length === 0) {
     const emptyRow = doc.createElement("tr");
-    const emptyCell = createQueueCell(
-      doc,
-      "No servicing requests are currently waiting in the queue.",
-      "queue-empty-cell",
-    );
+    const emptyCell = createQueueCell(doc, emptyMessage, "queue-empty-cell");
     emptyCell.colSpan = 5;
     emptyRow.append(emptyCell);
     queueBody.append(emptyRow);
@@ -131,6 +144,9 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
   const logoutButton = doc.querySelector("[data-csr-logout]");
   const queueStatus = doc.querySelector("[data-queue-status]");
   const queueBody = doc.querySelector("[data-csr-queue-body]");
+  const queueSearchForm = doc.querySelector("[data-queue-search-form]");
+  const queueSearchInput = doc.querySelector("[data-queue-search-input]");
+  const queueSearchClear = doc.querySelector("[data-queue-search-clear]");
   const statusFilterSelect = doc.querySelector("[data-queue-status-filter]");
   const clearFilterButton = doc.querySelector("[data-queue-status-clear]");
 
@@ -142,6 +158,9 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
       && logoutButton
       && queueStatus
       && queueBody
+      && queueSearchForm
+      && queueSearchInput
+      && queueSearchClear
       && statusFilterSelect
       && clearFilterButton
     )
@@ -170,6 +189,8 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
       waitForQueueLoad: () => Promise.resolve(),
       session: null,
       statusFilterSelect,
+      queueSearchForm,
+      queueSearchInput,
     };
   }
 
@@ -179,8 +200,11 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
 
   let currentQueueLoad = Promise.resolve();
 
-  const loadQueue = async () => {
-    const selectedStatus = resolveSelectedQueueStatus(statusFilterSelect);
+  const loadQueue = async ({ status, servicingOrderId } = {}) => {
+    const selectedStatus = status === undefined ? resolveSelectedQueueStatus(statusFilterSelect) : status;
+    const normalizedServicingOrderId =
+      servicingOrderId === undefined ? normalizeServicingOrderId(queueSearchInput.value) : servicingOrderId;
+    const hasServicingOrderSearch = Boolean(normalizedServicingOrderId);
 
     setStatusFilterControlState(clearFilterButton, selectedStatus);
 
@@ -190,25 +214,35 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
         "error",
         "Queue unavailable because this browser session cannot call the servicing API.",
       );
-      renderQueueRows(doc, queueBody, []);
+      renderQueueRows(doc, queueBody, [], {
+        emptyMessage: hasServicingOrderSearch
+          ? `No request matched servicing order ID "${normalizedServicingOrderId}".`
+          : "No servicing requests are currently waiting in the queue.",
+      });
       return;
     }
 
-    setQueueStatus(
-      queueStatus,
-      "info",
-      selectedStatus
+    const loadingMessage = hasServicingOrderSearch
+      ? `Searching for servicing order ID "${normalizedServicingOrderId}"${selectedStatus ? ` with status ${selectedStatus}` : ""}...`
+      : selectedStatus
         ? `Loading queue data for status: ${selectedStatus}...`
-        : "Loading queue data...",
-    );
+        : "Loading queue data...";
+
+    setQueueStatus(queueStatus, "info", loadingMessage);
 
     try {
-      const response = await fetchImpl(getQueueRequestUrl(apiBaseUrl, selectedStatus), {
-        headers: {
-          "x-authenticated-role": "csr",
-          "x-csr-staff-id": session.staffId,
+      const response = await fetchImpl(
+        buildQueueRequestUrl(apiBaseUrl, {
+          servicingOrderId: normalizedServicingOrderId || null,
+          status: selectedStatus,
+        }),
+        {
+          headers: {
+            "x-authenticated-role": "csr",
+            "x-csr-staff-id": session.staffId,
+          },
         },
-      });
+      );
 
       if (response.status === 401 || response.status === 403) {
         clearCsrSession(storage);
@@ -226,7 +260,31 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
       }
 
       const servicingOrders = await response.json();
-      renderQueueRows(doc, queueBody, servicingOrders);
+
+      if (hasServicingOrderSearch && servicingOrders.length === 0) {
+        const noMatchMessage = `No request matched servicing order ID "${normalizedServicingOrderId}".`;
+        renderQueueRows(doc, queueBody, servicingOrders, {
+          emptyMessage: noMatchMessage,
+        });
+        setQueueStatus(queueStatus, "info", noMatchMessage);
+        return;
+      }
+
+      renderQueueRows(doc, queueBody, servicingOrders, {
+        emptyMessage: hasServicingOrderSearch
+          ? `No request matched servicing order ID "${normalizedServicingOrderId}".`
+          : "No servicing requests are currently waiting in the queue.",
+      });
+
+      if (hasServicingOrderSearch) {
+        setQueueStatus(
+          queueStatus,
+          "success",
+          `Matched ${servicingOrders.length} request${servicingOrders.length === 1 ? "" : "s"} for servicing order ID "${normalizedServicingOrderId}"${selectedStatus ? ` with status ${selectedStatus}` : ""}.`,
+        );
+        return;
+      }
+
       setQueueStatus(
         queueStatus,
         "success",
@@ -245,12 +303,32 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
     }
   };
 
-  function triggerQueueLoad() {
-    currentQueueLoad = loadQueue();
+  function triggerQueueLoad(overrides = {}) {
+    currentQueueLoad = loadQueue(overrides);
     return currentQueueLoad;
   }
 
   const queueLoaded = triggerQueueLoad();
+
+  queueSearchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const normalizedId = normalizeServicingOrderId(queueSearchInput.value);
+
+    if (!normalizedId) {
+      setQueueStatus(queueStatus, "info", "Enter a servicing order ID to search the queue.");
+      renderQueueRows(doc, queueBody, [], {
+        emptyMessage: "Enter a servicing order ID to run the queue search.",
+      });
+      return;
+    }
+
+    void triggerQueueLoad({ servicingOrderId: normalizedId });
+  });
+
+  queueSearchClear.addEventListener("click", () => {
+    queueSearchInput.value = "";
+    void triggerQueueLoad({ servicingOrderId: null });
+  });
 
   logoutButton.addEventListener("click", () => {
     clearCsrSession(storage);
@@ -271,6 +349,8 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
     csrRole,
     csrStaffId,
     logoutButton,
+    queueSearchForm,
+    queueSearchInput,
     queueBody,
     queueLoaded,
     queueStatus,

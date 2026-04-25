@@ -102,6 +102,7 @@ function handleListRoute(request, response, dependencies, requestUrl) {
       query: {
         status: requestUrl.searchParams.get("status"),
         customerReference: requestUrl.searchParams.get("customerReference"),
+        servicingOrderId: requestUrl.searchParams.get("servicingOrderId"),
       },
       store: dependencies.store,
       logEvent: dependencies.logEvent,

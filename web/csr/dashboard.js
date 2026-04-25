@@ -6,6 +6,12 @@ import {
 } from "./auth.js";
 
 export const CSR_REQUEST_DETAIL_PATH = "/csr/request-detail.html";
+export const CSR_QUEUE_SUPPORTED_STATUSES = Object.freeze([
+  "Pending",
+  "In Progress",
+  "Completed",
+  "Rejected",
+]);
 
 function formatSubmittedDate(value) {
   const parsed = new Date(value);
@@ -26,12 +32,20 @@ function normalizeSearchValue(value) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
 
-function getQueueRequestUrl(apiBaseUrl) {
-  if (apiBaseUrl) {
-    return new URL("/ServicingOrder", apiBaseUrl).toString();
+function getQueueRequestUrl(apiBaseUrl, statusFilter = null) {
+  const queueUrl = apiBaseUrl
+    ? new URL("/ServicingOrder", apiBaseUrl)
+    : new URL("/ServicingOrder", "http://localhost");
+
+  if (statusFilter) {
+    queueUrl.searchParams.set("status", statusFilter);
   }
 
-  return "/ServicingOrder";
+  if (apiBaseUrl) {
+    return queueUrl.toString();
+  }
+
+  return `${queueUrl.pathname}${queueUrl.search}`;
 }
 
 function getRequestDetailUrl(servicingOrderId) {
@@ -51,6 +65,7 @@ function createQueueCell(doc, value, className) {
 
 function renderQueueRows(doc, queueBody, servicingOrders, { searchValue = "" } = {}) {
   queueBody.replaceChildren();
+
   const normalizedSearchValue = normalizeSearchValue(searchValue);
 
   if (!Array.isArray(servicingOrders) || servicingOrders.length === 0) {
@@ -92,6 +107,29 @@ function renderQueueRows(doc, queueBody, servicingOrders, { searchValue = "" } =
   queueBody.append(...rows);
 }
 
+function resolveSelectedQueueStatus(statusFilterSelect) {
+  const selectedStatus = statusFilterSelect?.value ?? "";
+
+  if (!selectedStatus) {
+    return null;
+  }
+
+  if (!CSR_QUEUE_SUPPORTED_STATUSES.includes(selectedStatus)) {
+    return null;
+  }
+
+  return selectedStatus;
+}
+
+function setStatusFilterControlState(clearFilterButton, selectedStatus) {
+  clearFilterButton.disabled = !selectedStatus;
+}
+
+function setSearchControlState(customerNameSearch, clearCustomerNameSearch, enabled) {
+  customerNameSearch.disabled = !enabled;
+  clearCustomerNameSearch.disabled = !enabled;
+}
+
 export function setupCsrDashboardPage(doc = document, options = {}) {
   const view = doc.defaultView;
   const storage = options.storage ?? view?.sessionStorage ?? null;
@@ -106,19 +144,23 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
   const logoutButton = doc.querySelector("[data-csr-logout]");
   const queueStatus = doc.querySelector("[data-queue-status]");
   const queueBody = doc.querySelector("[data-csr-queue-body]");
+  const statusFilterSelect = doc.querySelector("[data-queue-status-filter]");
+  const clearFilterButton = doc.querySelector("[data-queue-status-clear]");
   const customerNameSearch = doc.querySelector("[data-customer-name-search]");
   const clearCustomerNameSearch = doc.querySelector("[data-clear-customer-name-search]");
 
   if (
     !(
-      csrName &&
-      csrStaffId &&
-      csrRole &&
-      logoutButton &&
-      queueStatus &&
-      queueBody &&
-      customerNameSearch &&
-      clearCustomerNameSearch
+      csrName
+      && csrStaffId
+      && csrRole
+      && logoutButton
+      && queueStatus
+      && queueBody
+      && statusFilterSelect
+      && clearFilterButton
+      && customerNameSearch
+      && clearCustomerNameSearch
     )
   ) {
     throw new Error("CSR dashboard markup is incomplete.");
@@ -142,7 +184,9 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
       queueBody,
       queueStatus,
       queueLoaded: Promise.resolve(),
+      waitForQueueLoad: () => Promise.resolve(),
       session: null,
+      statusFilterSelect,
       customerNameSearch,
       clearCustomerNameSearch,
     };
@@ -153,8 +197,10 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
   csrRole.textContent = session.title;
 
   let loadedServicingOrders = [];
+  let currentQueueLoad = Promise.resolve();
 
-  function applyQueueFilter() {
+  function applyClientSideSearch() {
+    const selectedStatus = resolveSelectedQueueStatus(statusFilterSelect);
     const searchValue = customerNameSearch.value;
     const normalizedSearchValue = normalizeSearchValue(searchValue);
     const filteredServicingOrders = normalizedSearchValue
@@ -169,7 +215,9 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
       setQueueStatus(
         queueStatus,
         "success",
-        `Queue ready: ${loadedServicingOrders.length} request${loadedServicingOrders.length === 1 ? "" : "s"}.`,
+        selectedStatus
+          ? `Queue ready: ${loadedServicingOrders.length} request${loadedServicingOrders.length === 1 ? "" : "s"} with status ${selectedStatus}.`
+          : `Queue ready: ${loadedServicingOrders.length} request${loadedServicingOrders.length === 1 ? "" : "s"}.`,
       );
       return;
     }
@@ -186,44 +234,39 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
     setQueueStatus(
       queueStatus,
       "success",
-      `Queue ready: ${filteredServicingOrders.length} of ${loadedServicingOrders.length} request${loadedServicingOrders.length === 1 ? "" : "s"} match "${searchValue.trim()}".`,
+      selectedStatus
+        ? `Queue ready: ${filteredServicingOrders.length} of ${loadedServicingOrders.length} request${loadedServicingOrders.length === 1 ? "" : "s"} match "${searchValue.trim()}" with status ${selectedStatus}.`
+        : `Queue ready: ${filteredServicingOrders.length} of ${loadedServicingOrders.length} request${loadedServicingOrders.length === 1 ? "" : "s"} match "${searchValue.trim()}".`,
     );
   }
 
-  function setSearchEnabled(enabled) {
-    customerNameSearch.disabled = !enabled;
-    clearCustomerNameSearch.disabled = !enabled;
-  }
+  const loadQueue = async () => {
+    const selectedStatus = resolveSelectedQueueStatus(statusFilterSelect);
 
-  setSearchEnabled(false);
-  customerNameSearch.value = "";
+    setStatusFilterControlState(clearFilterButton, selectedStatus);
 
-  customerNameSearch.addEventListener("input", () => {
-    applyQueueFilter();
-  });
-
-  clearCustomerNameSearch.addEventListener("click", () => {
-    customerNameSearch.value = "";
-    applyQueueFilter();
-    customerNameSearch.focus();
-  });
-
-  const queueLoaded = (async () => {
     if (!fetchImpl) {
+      loadedServicingOrders = [];
       setQueueStatus(
         queueStatus,
         "error",
         "Queue unavailable because this browser session cannot call the servicing API.",
       );
       renderQueueRows(doc, queueBody, []);
-      setSearchEnabled(false);
+      setSearchControlState(customerNameSearch, clearCustomerNameSearch, false);
       return;
     }
 
-    setQueueStatus(queueStatus, "info", "Loading queue data...");
+    setQueueStatus(
+      queueStatus,
+      "info",
+      selectedStatus
+        ? `Loading queue data for status: ${selectedStatus}...`
+        : "Loading queue data...",
+    );
 
     try {
-      const response = await fetchImpl(getQueueRequestUrl(apiBaseUrl), {
+      const response = await fetchImpl(getQueueRequestUrl(apiBaseUrl, selectedStatus), {
         headers: {
           "x-authenticated-role": "csr",
           "x-csr-staff-id": session.staffId,
@@ -246,10 +289,11 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
       }
 
       loadedServicingOrders = await response.json();
-      setSearchEnabled(true);
-      applyQueueFilter();
+      setSearchControlState(customerNameSearch, clearCustomerNameSearch, true);
+      applyClientSideSearch();
     } catch (error) {
       loadedServicingOrders = [];
+      setSearchControlState(customerNameSearch, clearCustomerNameSearch, false);
       renderQueueRows(doc, queueBody, []);
       setQueueStatus(
         queueStatus,
@@ -257,13 +301,43 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
         "Queue unavailable. Confirm the servicing API is running and try again.",
       );
       queueStatus.dataset.errorDetail = error instanceof Error ? error.message : "Unknown error";
-      setSearchEnabled(false);
     }
-  })();
+  };
+
+  function triggerQueueLoad() {
+    currentQueueLoad = loadQueue();
+    return currentQueueLoad;
+  }
+
+  setSearchControlState(customerNameSearch, clearCustomerNameSearch, false);
+  customerNameSearch.value = "";
+
+  const queueLoaded = triggerQueueLoad();
 
   logoutButton.addEventListener("click", () => {
     clearCsrSession(storage);
     navigateTo(buildCsrLoginUrl({ signedOut: "1" }));
+  });
+
+  statusFilterSelect.addEventListener("change", () => {
+    customerNameSearch.value = "";
+    void triggerQueueLoad();
+  });
+
+  clearFilterButton.addEventListener("click", () => {
+    statusFilterSelect.value = "";
+    customerNameSearch.value = "";
+    void triggerQueueLoad();
+  });
+
+  customerNameSearch.addEventListener("input", () => {
+    applyClientSideSearch();
+  });
+
+  clearCustomerNameSearch.addEventListener("click", () => {
+    customerNameSearch.value = "";
+    applyClientSideSearch();
+    customerNameSearch.focus();
   });
 
   return {
@@ -275,8 +349,10 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
     queueLoaded,
     queueStatus,
     session,
+    statusFilterSelect,
     customerNameSearch,
     clearCustomerNameSearch,
+    waitForQueueLoad: () => currentQueueLoad,
   };
 }
 

@@ -197,6 +197,57 @@ function normalizeOptionalText(value) {
   return normalizedValue || null
 }
 
+function buildOperationalActor(authContext) {
+  const role = normalizeTextField(authContext?.role).toLowerCase() || "unknown"
+  const actor = { role }
+
+  const customerReference = normalizeOptionalText(authContext?.customerReference)
+  const staffId = normalizeOptionalText(authContext?.staffId)
+
+  if (customerReference) {
+    actor.customerReference = customerReference
+  }
+
+  if (staffId) {
+    actor.staffId = staffId
+  }
+
+  return actor
+}
+
+function emitOperationalEvent(logEvent, eventType, fields = {}) {
+  if (typeof logEvent !== "function") {
+    return
+  }
+
+  logEvent({
+    category: eventType === "access_denied" ? "security" : "workflow",
+    eventType,
+    ...fields,
+  })
+}
+
+function createAccessDeniedError({
+  logEvent,
+  authContext,
+  action,
+  statusCode,
+  error,
+  message,
+  details = [],
+}) {
+  const requestError = createRequestError(statusCode, error, message, details)
+
+  emitOperationalEvent(logEvent, "access_denied", {
+    action,
+    statusCode,
+    errorCode: requestError.code,
+    actor: buildOperationalActor(authContext),
+  })
+
+  return requestError
+}
+
 function validateUpdateInternalNote(newInternalNote, details) {
   if (!isObject(newInternalNote)) {
     details.push({
@@ -310,23 +361,30 @@ export function createServicingOrder({
   now = () => new Date().toISOString(),
   generateId = defaultGenerateId,
   downstreamProfileUpdateGateway,
+  logEvent,
 }) {
   if (!authContext || authContext.role !== "customer" || !authContext.customerReference) {
-    throw createRequestError(
-      401,
-      "Unauthorized",
-      "Customer-authenticated context is required.",
-    )
+    throw createAccessDeniedError({
+      logEvent,
+      authContext,
+      action: "servicing_order.initiate",
+      statusCode: 401,
+      error: "Unauthorized",
+      message: "Customer-authenticated context is required.",
+    })
   }
 
   const initiateRequest = validateInitiatePayload(payload)
 
   if (initiateRequest.customerReference !== authContext.customerReference) {
-    throw createRequestError(
-      403,
-      "Forbidden",
-      "Authenticated customer context does not match the request customer reference.",
-    )
+    throw createAccessDeniedError({
+      logEvent,
+      authContext,
+      action: "servicing_order.initiate",
+      statusCode: 403,
+      error: "Forbidden",
+      message: "Authenticated customer context does not match the request customer reference.",
+    })
   }
 
   assertDownstreamProfileAutomationDisabled(
@@ -350,6 +408,14 @@ export function createServicingOrder({
 
   const storedOrder = store.create(servicingOrder)
 
+  emitOperationalEvent(logEvent, "request_initiated", {
+    action: "servicing_order.initiate",
+    servicingOrderId: storedOrder.servicingOrderId,
+    customerReference: storedOrder.customerReference,
+    requestType: storedOrder.requestType,
+    status: storedOrder.servicingOrderStatus,
+  })
+
   return {
     storedOrder,
     responseOrder: toCustomerServicingOrder(storedOrder),
@@ -360,6 +426,7 @@ export function listServicingOrders({
   authContext,
   query = {},
   store,
+  logEvent,
 }) {
   const role = normalizeTextField(authContext?.role).toLowerCase()
   const authenticatedCsrStaffId = normalizeOptionalText(authContext?.staffId)
@@ -371,11 +438,14 @@ export function listServicingOrders({
 
   if (role === "csr") {
     if (!authenticatedCsrStaffId) {
-      throw createRequestError(
-        401,
-        "Unauthorized",
-        "CSR-authenticated context is required.",
-      )
+      throw createAccessDeniedError({
+        logEvent,
+        authContext,
+        action: "servicing_order.list",
+        statusCode: 401,
+        error: "Unauthorized",
+        message: "CSR-authenticated context is required.",
+      })
     }
 
     orders = store.list()
@@ -385,21 +455,27 @@ export function listServicingOrders({
     )
 
     if (!authenticatedCustomerReference) {
-      throw createRequestError(
-        401,
-        "Unauthorized",
-        "Customer-authenticated context is required.",
-      )
+      throw createAccessDeniedError({
+        logEvent,
+        authContext,
+        action: "servicing_order.list",
+        statusCode: 401,
+        error: "Unauthorized",
+        message: "Customer-authenticated context is required.",
+      })
     }
 
     if (
       customerReferenceFilter
     ) {
-      throw createRequestError(
-        403,
-        "Forbidden",
-        "customerReference filtering is restricted to CSR-authenticated context.",
-      )
+      throw createAccessDeniedError({
+        logEvent,
+        authContext,
+        action: "servicing_order.list",
+        statusCode: 403,
+        error: "Forbidden",
+        message: "customerReference filtering is restricted to CSR-authenticated context.",
+      })
     }
 
     if (customerNameFilter) {
@@ -414,11 +490,14 @@ export function listServicingOrders({
       .list()
       .filter((order) => order.customerReference === authenticatedCustomerReference)
   } else {
-    throw createRequestError(
-      401,
-      "Unauthorized",
-      "Authenticated CSR or customer context is required.",
-    )
+    throw createAccessDeniedError({
+      logEvent,
+      authContext,
+      action: "servicing_order.list",
+      statusCode: 401,
+      error: "Unauthorized",
+      message: "Authenticated CSR or customer context is required.",
+    })
   }
 
   if (customerReferenceFilter && role === "csr") {
@@ -447,15 +526,19 @@ export function getServicingOrderById({
   authContext,
   servicingOrderId,
   store,
+  logEvent,
 }) {
   const role = normalizeTextField(authContext?.role).toLowerCase()
 
   if (!role) {
-    throw createRequestError(
-      401,
-      "Unauthorized",
-      "Authenticated CSR or customer context is required.",
-    )
+    throw createAccessDeniedError({
+      logEvent,
+      authContext,
+      action: "servicing_order.get_by_id",
+      statusCode: 401,
+      error: "Unauthorized",
+      message: "Authenticated CSR or customer context is required.",
+    })
   }
 
   const servicingOrder = store.getById(servicingOrderId)
@@ -478,35 +561,45 @@ export function getServicingOrderById({
     )
 
     if (!authenticatedCustomerReference) {
-      throw createRequestError(
-        401,
-        "Unauthorized",
-        "Customer-authenticated context is required.",
-      )
+      throw createAccessDeniedError({
+        logEvent,
+        authContext,
+        action: "servicing_order.get_by_id",
+        statusCode: 401,
+        error: "Unauthorized",
+        message: "Customer-authenticated context is required.",
+      })
     }
 
     if (servicingOrder.customerReference !== authenticatedCustomerReference) {
-      throw createRequestError(
-        403,
-        "Forbidden",
-        "Authenticated customer context does not match the requested servicing order.",
-      )
+      throw createAccessDeniedError({
+        logEvent,
+        authContext,
+        action: "servicing_order.get_by_id",
+        statusCode: 403,
+        error: "Forbidden",
+        message: "Authenticated customer context does not match the requested servicing order.",
+      })
     }
 
     return toCustomerServicingOrder(servicingOrder)
   }
 
-  throw createRequestError(
-    401,
-    "Unauthorized",
-    "Authenticated CSR or customer context is required.",
-  )
+  throw createAccessDeniedError({
+    logEvent,
+    authContext,
+    action: "servicing_order.get_by_id",
+    statusCode: 401,
+    error: "Unauthorized",
+    message: "Authenticated CSR or customer context is required.",
+  })
 }
 
 export function getCustomerProfile({
   authContext,
   query = {},
   profileDirectory = CUSTOMER_PROFILE_DIRECTORY,
+  logEvent,
 }) {
   const role = normalizeTextField(authContext?.role).toLowerCase()
   const authenticatedCustomerReference = normalizeOptionalText(
@@ -515,38 +608,50 @@ export function getCustomerProfile({
   const requestedCustomerReference = normalizeOptionalText(query.customerReference)
 
   if (!role) {
-    throw createRequestError(
-      401,
-      "Unauthorized",
-      "Customer-authenticated context is required.",
-    )
+    throw createAccessDeniedError({
+      logEvent,
+      authContext,
+      action: "customer_profile.get",
+      statusCode: 401,
+      error: "Unauthorized",
+      message: "Customer-authenticated context is required.",
+    })
   }
 
   if (role !== "customer") {
-    throw createRequestError(
-      403,
-      "Forbidden",
-      "Customer-only operation. CSR-authenticated context is not allowed.",
-    )
+    throw createAccessDeniedError({
+      logEvent,
+      authContext,
+      action: "customer_profile.get",
+      statusCode: 403,
+      error: "Forbidden",
+      message: "Customer-only operation. CSR-authenticated context is not allowed.",
+    })
   }
 
   if (!authenticatedCustomerReference) {
-    throw createRequestError(
-      401,
-      "Unauthorized",
-      "Customer-authenticated context is required.",
-    )
+    throw createAccessDeniedError({
+      logEvent,
+      authContext,
+      action: "customer_profile.get",
+      statusCode: 401,
+      error: "Unauthorized",
+      message: "Customer-authenticated context is required.",
+    })
   }
 
   if (
     requestedCustomerReference &&
     requestedCustomerReference !== authenticatedCustomerReference
   ) {
-    throw createRequestError(
-      403,
-      "Forbidden",
-      "Authenticated customer context does not match the requested customer reference.",
-    )
+    throw createAccessDeniedError({
+      logEvent,
+      authContext,
+      action: "customer_profile.get",
+      statusCode: 403,
+      error: "Forbidden",
+      message: "Authenticated customer context does not match the requested customer reference.",
+    })
   }
 
   const profile = profileDirectory[authenticatedCustomerReference]
@@ -577,16 +682,20 @@ export function updateServicingOrder({
   store,
   now = () => new Date().toISOString(),
   downstreamProfileUpdateGateway,
+  logEvent,
 }) {
   const role = normalizeTextField(authContext?.role).toLowerCase()
   const authenticatedCsrStaffId = normalizeOptionalText(authContext?.staffId)
 
   if (role !== "csr") {
-    throw createRequestError(
-      401,
-      "Unauthorized",
-      "CSR-authenticated context is required.",
-    )
+    throw createAccessDeniedError({
+      logEvent,
+      authContext,
+      action: "servicing_order.update",
+      statusCode: 401,
+      error: "Unauthorized",
+      message: "CSR-authenticated context is required.",
+    })
   }
 
   const existingOrder = store.getById(servicingOrderId)
@@ -624,8 +733,16 @@ export function updateServicingOrder({
     updatedOrder.statusChangeAudit = []
   }
 
-  if (requestedStatus) {
+  if (requestedStatus && requestedStatus !== updatedOrder.servicingOrderStatus) {
+    const previousStatus = updatedOrder.servicingOrderStatus
     updatedOrder.servicingOrderStatus = requestedStatus
+    emitOperationalEvent(logEvent, "request_status_updated", {
+      action: "servicing_order.update",
+      servicingOrderId,
+      actor: buildOperationalActor(authContext),
+      previousStatus,
+      nextStatus: requestedStatus,
+    })
   }
 
   if (statusChanged) {
@@ -642,6 +759,12 @@ export function updateServicingOrder({
       note: internalNote.note,
       author: internalNote.author,
       timestamp,
+    })
+    emitOperationalEvent(logEvent, "internal_note_added", {
+      action: "servicing_order.update",
+      servicingOrderId,
+      actor: buildOperationalActor(authContext),
+      noteAuthor: internalNote.author,
     })
   }
 

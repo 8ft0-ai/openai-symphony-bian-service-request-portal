@@ -59,6 +59,17 @@
           <article class="dashboard-card queue-panel">
             <p class="section-label">Manual servicing queue</p>
             <h2>Cross-customer requests ready for CSR triage.</h2>
+            <div class="queue-filter-controls">
+              <label for="queue-status-filter">Filter by status</label>
+              <select id="queue-status-filter" data-queue-status-filter>
+                <option value="">All statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+              <button type="button" data-queue-status-clear>Clear filter</button>
+            </div>
             <div class="queue-search">
               <label for="customer-name-search" class="queue-search-label">Search customer name</label>
               <div class="queue-search-controls">

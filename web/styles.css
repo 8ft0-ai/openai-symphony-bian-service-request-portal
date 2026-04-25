@@ -247,6 +247,42 @@ input:focus {
   grid-column: 1 / -1;
 }
 
+.queue-search {
+  margin-top: 0.9rem;
+}
+
+.queue-search-label {
+  display: inline-block;
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+}
+
+.queue-search-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.queue-search-controls input {
+  width: min(100%, 22rem);
+}
+
+.queue-search-controls button {
+  width: auto;
+  border: 1px solid var(--line);
+  padding: 0.7rem 0.9rem;
+  background: var(--panel-strong);
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.queue-search-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .queue-status {
   margin: 0.9rem 0 0;
   padding: 0.7rem 0.85rem;

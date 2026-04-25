@@ -446,6 +446,53 @@ test("supports status filtering for CSR queue retrieval", async () => {
   })
 })
 
+test("supports exact and partial customer-name filtering for CSR queue retrieval", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_3501",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_3502",
+        customerReference: "CUST_22222",
+        customerName: "Riley Hart",
+        requestType: "Email Update",
+        servicingOrderStatus: "Completed",
+        submittedDate: "2026-04-02T00:00:00.000Z",
+      }),
+    )
+
+    const exactMatch = await listRequest(baseUrl, {
+      query: "?customerName=Alex%20Quinn",
+      headers: {
+        "x-authenticated-role": "csr",
+        "x-csr-staff-id": "csr.queue.ops",
+      },
+    })
+
+    assert.equal(exactMatch.status, 200)
+    assert.deepEqual(exactMatch.body.map((order) => order.servicingOrderId), ["SO_TEST_3501"])
+
+    const partialMatch = await listRequest(baseUrl, {
+      query: "?customerName=ley",
+      headers: {
+        "x-authenticated-role": "csr",
+        "x-csr-staff-id": "csr.queue.ops",
+      },
+    })
+
+    assert.equal(partialMatch.status, 200)
+    assert.deepEqual(partialMatch.body.map((order) => order.servicingOrderId), ["SO_TEST_3502"])
+  })
+})
+
 test("rejects list retrieval without an authenticated role context", async () => {
   await withApiServer(async ({ baseUrl }) => {
     const response = await listRequest(baseUrl)
@@ -553,6 +600,35 @@ test("rejects customer attempts to query another customer's servicing orders", a
       status: 403,
       error: "Forbidden",
       message: "customerReference filtering is restricted to CSR-authenticated context.",
+    })
+  })
+})
+
+test("rejects customer attempts to filter servicing orders by customer name", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_5002",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+
+    const response = await listRequest(baseUrl, {
+      query: "?customerName=Alex",
+      headers: {
+        "x-authenticated-role": "customer",
+        "x-customer-reference": "CUST_11111",
+      },
+    })
+
+    assertErrorResponse(response, {
+      status: 403,
+      error: "Forbidden",
+      message: "customerName filtering is restricted to CSR-authenticated context.",
     })
   })
 })

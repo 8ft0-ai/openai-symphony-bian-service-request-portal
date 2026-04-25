@@ -446,6 +446,94 @@ test("supports status filtering for CSR queue retrieval", async () => {
   })
 })
 
+test("supports servicing order ID filtering for CSR queue retrieval", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_3003",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_3004",
+        customerReference: "CUST_22222",
+        customerName: "Riley Hart",
+        requestType: "Email Update",
+        servicingOrderStatus: "Completed",
+        submittedDate: "2026-04-02T00:00:00.000Z",
+      }),
+    )
+
+    const response = await listRequest(baseUrl, {
+      query: "?servicingOrderId=SO_TEST_3003",
+      headers: {
+        "x-authenticated-role": "csr",
+        "x-csr-staff-id": "csr.queue.ops",
+      },
+    })
+
+    assert.equal(response.status, 200)
+    assert.deepEqual(response.body.map((order) => order.servicingOrderId), ["SO_TEST_3003"])
+  })
+})
+
+test("supports normalized servicing order ID matching for CSR queue retrieval", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_3005",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+
+    const response = await listRequest(baseUrl, {
+      query: "?servicingOrderId=so-test-3005",
+      headers: {
+        "x-authenticated-role": "csr",
+        "x-csr-staff-id": "csr.queue.ops",
+      },
+    })
+
+    assert.equal(response.status, 200)
+    assert.deepEqual(response.body.map((order) => order.servicingOrderId), ["SO_TEST_3005"])
+  })
+})
+
+test("returns empty list when servicing order ID filter has no match", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_3006",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+
+    const response = await listRequest(baseUrl, {
+      query: "?servicingOrderId=SO_TEST_UNKNOWN",
+      headers: {
+        "x-authenticated-role": "csr",
+        "x-csr-staff-id": "csr.queue.ops",
+      },
+    })
+
+    assert.equal(response.status, 200)
+    assert.deepEqual(response.body, [])
+  })
+})
+
 test("rejects list retrieval without an authenticated role context", async () => {
   await withApiServer(async ({ baseUrl }) => {
     const response = await listRequest(baseUrl)
@@ -553,6 +641,35 @@ test("rejects customer attempts to query another customer's servicing orders", a
       status: 403,
       error: "Forbidden",
       message: "customerReference filtering is restricted to CSR-authenticated context.",
+    })
+  })
+})
+
+test("rejects customer attempts to filter servicing orders by servicing order ID", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_5002",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+
+    const response = await listRequest(baseUrl, {
+      query: "?servicingOrderId=SO_TEST_5002",
+      headers: {
+        "x-authenticated-role": "customer",
+        "x-customer-reference": "CUST_11111",
+      },
+    })
+
+    assertErrorResponse(response, {
+      status: 403,
+      error: "Forbidden",
+      message: "servicingOrderId filtering is restricted to CSR-authenticated context.",
     })
   })
 })

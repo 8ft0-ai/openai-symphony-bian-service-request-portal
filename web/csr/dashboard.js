@@ -30,6 +30,30 @@ function getQueueRequestUrl(apiBaseUrl) {
   return "/ServicingOrder";
 }
 
+function normalizeServicingOrderId(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function withQueueFilters(apiBaseUrl, filters = {}) {
+  const queueUrl = new URL(getQueueRequestUrl(apiBaseUrl), "http://localhost");
+
+  if (filters.servicingOrderId) {
+    queueUrl.searchParams.set("servicingOrderId", filters.servicingOrderId);
+  }
+
+  const requestPath = `${queueUrl.pathname}${queueUrl.search}`;
+
+  if (apiBaseUrl) {
+    return new URL(requestPath, apiBaseUrl).toString();
+  }
+
+  return requestPath;
+}
+
 function getRequestDetailUrl(servicingOrderId) {
   return `${CSR_REQUEST_DETAIL_PATH}?servicingOrderId=${encodeURIComponent(servicingOrderId)}`;
 }
@@ -45,14 +69,19 @@ function createQueueCell(doc, value, className) {
   return cell;
 }
 
-function renderQueueRows(doc, queueBody, servicingOrders) {
+function renderQueueRows(
+  doc,
+  queueBody,
+  servicingOrders,
+  { emptyMessage = "No servicing requests are currently waiting in the queue." } = {},
+) {
   queueBody.replaceChildren();
 
   if (!Array.isArray(servicingOrders) || servicingOrders.length === 0) {
     const emptyRow = doc.createElement("tr");
     const emptyCell = createQueueCell(
       doc,
-      "No servicing requests are currently waiting in the queue.",
+      emptyMessage,
       "queue-empty-cell",
     );
     emptyCell.colSpan = 5;
@@ -99,8 +128,23 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
   const logoutButton = doc.querySelector("[data-csr-logout]");
   const queueStatus = doc.querySelector("[data-queue-status]");
   const queueBody = doc.querySelector("[data-csr-queue-body]");
+  const queueSearchForm = doc.querySelector("[data-queue-search-form]");
+  const queueSearchInput = doc.querySelector("[data-queue-search-input]");
+  const queueSearchClear = doc.querySelector("[data-queue-search-clear]");
 
-  if (!(csrName && csrStaffId && csrRole && logoutButton && queueStatus && queueBody)) {
+  if (
+    !(
+      csrName &&
+      csrStaffId &&
+      csrRole &&
+      logoutButton &&
+      queueStatus &&
+      queueBody &&
+      queueSearchForm &&
+      queueSearchInput &&
+      queueSearchClear
+    )
+  ) {
     throw new Error("CSR dashboard markup is incomplete.");
   }
 
@@ -130,21 +174,33 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
   csrStaffId.textContent = session.staffId;
   csrRole.textContent = session.title;
 
-  const queueLoaded = (async () => {
+  async function loadQueue(filters = {}) {
+    const hasServicingOrderSearch = Boolean(filters.servicingOrderId);
+
     if (!fetchImpl) {
       setQueueStatus(
         queueStatus,
         "error",
         "Queue unavailable because this browser session cannot call the servicing API.",
       );
-      renderQueueRows(doc, queueBody, []);
+      renderQueueRows(doc, queueBody, [], {
+        emptyMessage: hasServicingOrderSearch
+          ? `No request matched servicing order ID "${filters.servicingOrderId}".`
+          : "No servicing requests are currently waiting in the queue.",
+      });
       return;
     }
 
-    setQueueStatus(queueStatus, "info", "Loading queue data...");
+    setQueueStatus(
+      queueStatus,
+      "info",
+      hasServicingOrderSearch
+        ? `Searching for servicing order ID "${filters.servicingOrderId}"...`
+        : "Loading queue data...",
+    );
 
     try {
-      const response = await fetchImpl(getQueueRequestUrl(apiBaseUrl), {
+      const response = await fetchImpl(withQueueFilters(apiBaseUrl, filters), {
         headers: {
           "x-authenticated-role": "csr",
           "x-csr-staff-id": session.staffId,
@@ -167,7 +223,34 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
       }
 
       const servicingOrders = await response.json();
-      renderQueueRows(doc, queueBody, servicingOrders);
+
+      if (hasServicingOrderSearch && servicingOrders.length === 0) {
+        renderQueueRows(doc, queueBody, servicingOrders, {
+          emptyMessage: `No request matched servicing order ID "${filters.servicingOrderId}".`,
+        });
+        setQueueStatus(
+          queueStatus,
+          "info",
+          `No request matched servicing order ID "${filters.servicingOrderId}".`,
+        );
+        return;
+      }
+
+      renderQueueRows(doc, queueBody, servicingOrders, {
+        emptyMessage: hasServicingOrderSearch
+          ? `No request matched servicing order ID "${filters.servicingOrderId}".`
+          : "No servicing requests are currently waiting in the queue.",
+      });
+
+      if (hasServicingOrderSearch) {
+        setQueueStatus(
+          queueStatus,
+          "success",
+          `Matched ${servicingOrders.length} request${servicingOrders.length === 1 ? "" : "s"} for servicing order ID "${filters.servicingOrderId}".`,
+        );
+        return;
+      }
+
       setQueueStatus(
         queueStatus,
         "success",
@@ -182,7 +265,29 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
       );
       queueStatus.dataset.errorDetail = error instanceof Error ? error.message : "Unknown error";
     }
-  })();
+  }
+
+  const queueLoaded = loadQueue();
+
+  queueSearchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const normalizedId = normalizeServicingOrderId(queueSearchInput.value);
+
+    if (!normalizedId) {
+      setQueueStatus(queueStatus, "info", "Enter a servicing order ID to search the queue.");
+      renderQueueRows(doc, queueBody, [], {
+        emptyMessage: "Enter a servicing order ID to run the queue search.",
+      });
+      return;
+    }
+
+    void loadQueue({ servicingOrderId: normalizedId });
+  });
+
+  queueSearchClear.addEventListener("click", () => {
+    queueSearchInput.value = "";
+    void loadQueue();
+  });
 
   logoutButton.addEventListener("click", () => {
     clearCsrSession(storage);
@@ -194,6 +299,8 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
     csrRole,
     csrStaffId,
     logoutButton,
+    queueSearchForm,
+    queueSearchInput,
     queueBody,
     queueLoaded,
     queueStatus,

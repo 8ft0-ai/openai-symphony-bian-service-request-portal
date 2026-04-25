@@ -197,6 +197,16 @@ function normalizeOptionalText(value) {
   return normalizedValue || null
 }
 
+function normalizeServicingOrderIdForMatch(value) {
+  const normalizedValue = normalizeOptionalText(value)
+
+  if (!normalizedValue) {
+    return null
+  }
+
+  return normalizedValue.toUpperCase().replace(/[^A-Z0-9]/g, "")
+}
+
 function validateUpdateInternalNote(newInternalNote, details) {
   if (!isObject(newInternalNote)) {
     details.push({
@@ -365,6 +375,10 @@ export function listServicingOrders({
   const authenticatedCsrStaffId = normalizeOptionalText(authContext?.staffId)
   const statusFilter = normalizeOptionalText(query.status)
   const customerReferenceFilter = normalizeOptionalText(query.customerReference)
+  const servicingOrderIdFilter = normalizeOptionalText(query.servicingOrderId)
+  const normalizedServicingOrderIdFilter = normalizeServicingOrderIdForMatch(
+    query.servicingOrderId,
+  )
 
   let orders
 
@@ -401,6 +415,14 @@ export function listServicingOrders({
       )
     }
 
+    if (servicingOrderIdFilter) {
+      throw createRequestError(
+        403,
+        "Forbidden",
+        "servicingOrderId filtering is restricted to CSR-authenticated context.",
+      )
+    }
+
     orders = store
       .list()
       .filter((order) => order.customerReference === authenticatedCustomerReference)
@@ -418,6 +440,24 @@ export function listServicingOrders({
 
   if (statusFilter) {
     orders = orders.filter((order) => order.servicingOrderStatus === statusFilter)
+  }
+
+  if (servicingOrderIdFilter && role === "csr") {
+    orders = orders.filter((order) => {
+      const orderId = normalizeOptionalText(order.servicingOrderId)
+
+      if (!orderId) {
+        return false
+      }
+
+      if (orderId === servicingOrderIdFilter) {
+        return true
+      }
+
+      return (
+        normalizeServicingOrderIdForMatch(orderId) === normalizedServicingOrderIdFilter
+      )
+    })
   }
 
   if (role === "customer") {

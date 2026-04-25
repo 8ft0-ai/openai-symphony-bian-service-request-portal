@@ -59,6 +59,27 @@
           <article class="dashboard-card queue-panel">
             <p class="section-label">Manual servicing queue</p>
             <h2>Cross-customer requests ready for CSR triage.</h2>
+            <form class="queue-search-form" data-queue-search-form>
+              <label class="field-label" for="servicing-order-search-input">
+                Search by servicing order ID
+              </label>
+              <div class="queue-search-controls">
+                <input
+                  id="servicing-order-search-input"
+                  name="servicingOrderId"
+                  type="search"
+                  autocomplete="off"
+                  placeholder="e.g. SO_TEST_2001"
+                  data-queue-search-input
+                />
+                <button type="submit" class="primary-action queue-search-action">
+                  Search
+                </button>
+                <button type="button" class="queue-clear-action" data-queue-search-clear>
+                  Clear
+                </button>
+              </div>
+            </form>
             <p class="queue-status" data-queue-status role="status" aria-live="polite">
               Loading queue data...
             </p>

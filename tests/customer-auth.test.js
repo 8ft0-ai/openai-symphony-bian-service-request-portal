@@ -170,8 +170,8 @@ test("request history rows include type, submitted date, status, and detail link
     "#/customer/requests/SR-1042",
     "#/customer/requests/SR-1028",
   ]);
-  assert.match(document.body.textContent, /Address update/);
-  assert.match(document.body.textContent, /Email update/);
+  assert.match(document.body.textContent, /Address Update/);
+  assert.match(document.body.textContent, /Email Update/);
 });
 
 test("request history renders an empty state when the authenticated customer has no requests", () => {
@@ -265,4 +265,50 @@ test("dashboard model exposes only the authenticated customer's source profile",
   assert.match(bodyText, /18 Harbour View Road, Sydney NSW 2000/);
   assert.doesNotMatch(bodyText, /Riley Banks/);
   assert.doesNotMatch(bodyText, /99 Hidden Avenue, Perth WA 6000/);
+});
+
+test("customer request detail route renders required fields for supported request types", () => {
+  const { document, window } = createFixture();
+
+  submitLogin(document, window, {
+    customerNumber: "100200300",
+    accessCode: "246810",
+  });
+
+  window.location.hash = "#/customer/requests/SR-1042";
+  window.dispatchEvent(new window.HashChangeEvent("hashchange"));
+
+  let bodyText = document.body.textContent.replace(/\s+/g, " ");
+
+  assert.equal(window.location.hash, "#/customer/requests/SR-1042");
+  assert.match(bodyText, /Servicing request detail/);
+  assert.match(bodyText, /Request type Address Update/);
+  assert.match(bodyText, /Submitted date 2026-04-12/);
+  assert.match(bodyText, /Last updated date 2026-04-14/);
+  assert.match(bodyText, /Current status Pending/);
+  assert.match(bodyText, /Old Address 18 Harbour View Road, Sydney NSW 2000/);
+  assert.match(bodyText, /New Address 21 Bayside Parade, Sydney NSW 2000/);
+  assert.doesNotMatch(bodyText, /CSR internal verification in progress/);
+
+  window.location.hash = "#/customer/requests/SR-1028";
+  window.dispatchEvent(new window.HashChangeEvent("hashchange"));
+
+  bodyText = document.body.textContent.replace(/\s+/g, " ");
+
+  assert.equal(window.location.hash, "#/customer/requests/SR-1028");
+  assert.match(bodyText, /Request type Email Update/);
+  assert.match(bodyText, /Submitted date 2026-04-07/);
+  assert.match(bodyText, /Last updated date 2026-04-08/);
+  assert.match(bodyText, /Current status Completed/);
+  assert.match(bodyText, /Old Email Address jordan\.lee@examplebank\.test/);
+  assert.match(bodyText, /New Email Address jordan\.lee\+personal@examplemail\.test/);
+  assert.doesNotMatch(bodyText, /internal notes/i);
+});
+
+test("unauthenticated customer request detail route redirects to login", () => {
+  const { document, window, app } = createFixture("#/customer/requests/SR-1042");
+
+  assert.equal(app.getCurrentRoute(), CUSTOMER_ROUTES.login);
+  assert.equal(window.location.hash, "#/customer/login");
+  assert.match(document.body.textContent, /bank-approved customer credentials/);
 });

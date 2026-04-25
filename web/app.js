@@ -5,6 +5,8 @@ export const CUSTOMER_ROUTES = Object.freeze({
   dashboard: "/customer/dashboard",
 });
 
+const CUSTOMER_REQUEST_DETAIL_ROUTE_PREFIX = "/customer/requests/";
+
 const REDIRECT_MESSAGES = Object.freeze({
   authRequired:
     "Sign in with your bank-approved customer credentials to access customer portal functions.",
@@ -27,15 +29,30 @@ const CUSTOMER_DIRECTORY = Object.freeze({
     requests: Object.freeze([
       Object.freeze({
         id: "SR-1042",
-        type: "Address update",
+        type: "Address Update",
         submittedDate: "2026-04-12T09:15:00.000Z",
+        lastUpdatedDate: "2026-04-14T05:30:00.000Z",
         status: "Pending",
+        requestDetails: Object.freeze({
+          oldAddress: "18 Harbour View Road, Sydney NSW 2000",
+          newAddress: "21 Bayside Parade, Sydney NSW 2000",
+        }),
+        internalNotes: Object.freeze([
+          Object.freeze({
+            note: "CSR internal verification in progress.",
+          }),
+        ]),
       }),
       Object.freeze({
         id: "SR-1028",
-        type: "Email update",
+        type: "Email Update",
         submittedDate: "2026-04-07T03:40:00.000Z",
+        lastUpdatedDate: "2026-04-08T00:10:00.000Z",
         status: "Completed",
+        requestDetails: Object.freeze({
+          oldEmailAddress: "jordan.lee@examplebank.test",
+          newEmailAddress: "jordan.lee+personal@examplemail.test",
+        }),
       }),
     ]),
   }),
@@ -62,8 +79,14 @@ const CUSTOMER_DIRECTORY = Object.freeze({
     requests: Object.freeze([
       Object.freeze({
         id: "SR-1001",
-        type: "Phone number update",
+        type: "Phone Update",
+        submittedDate: "2026-03-28T11:00:00.000Z",
+        lastUpdatedDate: "2026-03-31T02:00:00.000Z",
         status: "Rejected",
+        requestDetails: Object.freeze({
+          oldPhoneNumber: "+61 422 555 014",
+          newPhoneNumber: "+61 422 555 099",
+        }),
       }),
     ]),
   }),
@@ -85,6 +108,12 @@ function formatSubmittedDate(value) {
   }
 
   return parsedDate.toISOString().slice(0, 10);
+}
+
+function formatRequestDetailLabel(key) {
+  return String(key)
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/^./, (character) => character.toUpperCase());
 }
 
 function escapeHtml(value) {
@@ -234,6 +263,13 @@ export function normalizeCustomerRoute(route) {
     return CUSTOMER_ROUTES.dashboard;
   }
 
+  if (
+    normalizedRoute.startsWith(CUSTOMER_REQUEST_DETAIL_ROUTE_PREFIX) &&
+    normalizedRoute.slice(CUSTOMER_REQUEST_DETAIL_ROUTE_PREFIX.length).trim()
+  ) {
+    return normalizedRoute;
+  }
+
   return CUSTOMER_ROUTES.login;
 }
 
@@ -252,6 +288,16 @@ export function resolveCustomerRoute(route, storage) {
     return {
       route: CUSTOMER_ROUTES.dashboard,
       notice: REDIRECT_MESSAGES.sessionRestored,
+    };
+  }
+
+  if (
+    normalizedRoute.startsWith(CUSTOMER_REQUEST_DETAIL_ROUTE_PREFIX) &&
+    !session
+  ) {
+    return {
+      route: CUSTOMER_ROUTES.login,
+      notice: REDIRECT_MESSAGES.authRequired,
     };
   }
 
@@ -434,6 +480,108 @@ function buildDashboardMarkup({ model, noticeMessage }) {
   `;
 }
 
+function getCustomerRequestById(model, requestId) {
+  return model.requests.find((request) => request.id === requestId) || null;
+}
+
+function buildRequestDetailMarkup({
+  model,
+  requestId,
+  request,
+  noticeMessage,
+}) {
+  const detailRows = Object.entries(request?.requestDetails || {});
+  const detailRowsMarkup =
+    detailRows.length > 0
+      ? detailRows
+          .map(
+            ([key, value]) => `
+              <div>
+                <dt>${escapeHtml(formatRequestDetailLabel(key))}</dt>
+                <dd>${escapeHtml(formatProfileValue(value))}</dd>
+              </div>
+            `,
+          )
+          .join("")
+      : `
+        <div>
+          <dt>Request details</dt>
+          <dd>Unavailable</dd>
+        </div>
+      `;
+
+  const requestMarkup = request
+    ? `
+      <div class="dashboard-grid">
+        <section class="dashboard-card" aria-labelledby="request-detail-title">
+          <p class="section-label">Customer-visible request detail</p>
+          <h2 id="request-detail-title">${escapeHtml(request.id)}</h2>
+          <dl class="profile-list request-detail-list">
+            <div>
+              <dt>Request type</dt>
+              <dd>${escapeHtml(formatProfileValue(request.type))}</dd>
+            </div>
+            <div>
+              <dt>Submitted date</dt>
+              <dd>${escapeHtml(formatSubmittedDate(request.submittedDate))}</dd>
+            </div>
+            <div>
+              <dt>Last updated date</dt>
+              <dd>${escapeHtml(formatSubmittedDate(request.lastUpdatedDate))}</dd>
+            </div>
+            <div>
+              <dt>Current status</dt>
+              <dd>${escapeHtml(formatProfileValue(request.status))}</dd>
+            </div>
+          </dl>
+        </section>
+        <section class="dashboard-card" aria-labelledby="request-detail-fields-title">
+          <p class="section-label">Request details submitted</p>
+          <h2 id="request-detail-fields-title">Requested change information</h2>
+          <dl class="profile-list request-detail-fields">
+            ${detailRowsMarkup}
+          </dl>
+        </section>
+      </div>
+    `
+    : `
+      <section class="dashboard-card" aria-labelledby="request-detail-missing-title">
+        <p class="section-label">Customer-visible request detail</p>
+        <h2 id="request-detail-missing-title">Request not found</h2>
+        <p>
+          The request ID <code>${escapeHtml(requestId)}</code> is not available in this customer session.
+        </p>
+      </section>
+    `;
+
+  return `
+    <section class="portal-layout portal-layout-dashboard" aria-labelledby="customer-request-detail-heading">
+      <header class="dashboard-hero">
+        <div>
+          <p class="eyebrow">Authenticated customer channel</p>
+          <h1 id="customer-request-detail-heading">Servicing request detail</h1>
+          <p class="intro">
+            Reviewing request visibility for ${escapeHtml(model.customerName)} within customer-only context.
+          </p>
+        </div>
+        <div class="session-chip" aria-label="Authenticated customer session">
+          <span>Bank-approved session</span>
+          <strong>Customer ${escapeHtml(model.customerNumber)}</strong>
+        </div>
+      </header>
+      ${
+        noticeMessage
+          ? `<p class="banner banner-success" role="status">${escapeHtml(noticeMessage)}</p>`
+          : ""
+      }
+      ${requestMarkup}
+      <p>
+        <a class="request-detail-back-link" href="#${CUSTOMER_ROUTES.dashboard}">Back to request history</a>
+      </p>
+    </section>
+  `;
+}
+
 export function setupCustomerPortal(doc = document, win = window, options = {}) {
   const customerDirectory = options.customerDirectory || CUSTOMER_DIRECTORY;
   const root = doc.querySelector("[data-portal-root]");
@@ -466,6 +614,24 @@ export function setupCustomerPortal(doc = document, win = window, options = {}) 
       doc.title = "Customer Dashboard | Service Request Portal";
       root.innerHTML = buildDashboardMarkup({
         model: dashboardModel,
+        noticeMessage: viewState.noticeMessage,
+      });
+      viewState.noticeMessage = "";
+      return;
+    }
+
+    if (resolvedRoute.route.startsWith(CUSTOMER_REQUEST_DETAIL_ROUTE_PREFIX)) {
+      const dashboardModel = getCustomerDashboardModel(storage, customerDirectory);
+      const requestId = decodeURIComponent(
+        resolvedRoute.route.slice(CUSTOMER_REQUEST_DETAIL_ROUTE_PREFIX.length),
+      );
+      const request = getCustomerRequestById(dashboardModel, requestId);
+
+      doc.title = "Customer Request Detail | Service Request Portal";
+      root.innerHTML = buildRequestDetailMarkup({
+        model: dashboardModel,
+        requestId,
+        request,
         noticeMessage: viewState.noticeMessage,
       });
       viewState.noticeMessage = "";

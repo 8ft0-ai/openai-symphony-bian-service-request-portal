@@ -13,10 +13,9 @@
         <article class="dashboard-hero" aria-labelledby="csr-request-detail-title">
           <div class="dashboard-title-group">
             <p class="eyebrow">CSR Queue</p>
-            <h1 id="csr-request-detail-title">Request detail route</h1>
+            <h1 id="csr-request-detail-title">Servicing request detail</h1>
             <p class="intro">
-              This route confirms queue navigation context and preserves the CSR-only session
-              boundary ahead of full detail implementation.
+              Review customer request information and complete manual processing decisions.
             </p>
           </div>
           <div class="session-chip">
@@ -27,15 +26,79 @@
         <section class="dashboard-grid" aria-label="Request detail context">
           <article class="dashboard-card">
             <p class="section-label">Selected request</p>
-            <h2 data-request-detail-id>Unknown request</h2>
-            <p data-request-detail-note>
-              No servicing order was selected from the queue.
+            <h2 data-request-detail-id>Unavailable</h2>
+            <p class="queue-status" data-request-detail-status data-tone="info">
+              Waiting to load request detail.
             </p>
           </article>
           <article class="dashboard-card">
             <p class="section-label">Actions</p>
             <h2>Return to queue</h2>
             <a class="request-detail-link" href="/csr/dashboard.html">Back to CSR queue</a>
+          </article>
+
+          <article class="dashboard-card">
+            <p class="section-label">Customer information</p>
+            <h2 data-request-customer-name>Unavailable</h2>
+            <dl class="profile-list">
+              <div>
+                <dt>Customer reference</dt>
+                <dd data-request-customer-reference>Unavailable</dd>
+              </div>
+              <div>
+                <dt>Request type</dt>
+                <dd data-request-type>Unavailable</dd>
+              </div>
+              <div>
+                <dt>Current status</dt>
+                <dd data-request-status>Unavailable</dd>
+              </div>
+              <div>
+                <dt>Submitted date</dt>
+                <dd data-request-submitted-date>Unavailable</dd>
+              </div>
+              <div>
+                <dt>Last update date</dt>
+                <dd data-request-last-update-date>Unavailable</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article class="dashboard-card">
+            <p class="section-label">Old vs requested new values</p>
+            <h2>Requested change comparison</h2>
+            <div class="queue-table-wrap">
+              <table class="queue-table request-detail-comparison-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Field</th>
+                    <th scope="col">Current value</th>
+                    <th scope="col">Requested new value</th>
+                  </tr>
+                </thead>
+                <tbody data-request-comparison-body>
+                  <tr>
+                    <td class="queue-empty-cell" colspan="3">No request details available.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="dashboard-card">
+            <p class="section-label">Request history</p>
+            <h2>Status transition history</h2>
+            <ol class="request-history-list" data-request-history-list>
+              <li class="request-empty-state">No request history is available.</li>
+            </ol>
+          </article>
+
+          <article class="dashboard-card">
+            <p class="section-label">Internal notes</p>
+            <h2>CSR-only notes</h2>
+            <ul class="request-history-list" data-request-internal-notes>
+              <li class="request-empty-state">No internal notes are available.</li>
+            </ul>
           </article>
         </section>
       </section>

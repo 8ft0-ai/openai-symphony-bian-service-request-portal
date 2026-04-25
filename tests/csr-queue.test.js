@@ -13,6 +13,7 @@ import {
 } from "../web/csr/auth.js";
 import {
   CSR_REQUEST_DETAIL_PATH,
+  CSR_QUEUE_SUPPORTED_STATUSES,
   setupCsrDashboardPage,
 } from "../web/csr/dashboard.js";
 
@@ -110,6 +111,79 @@ test("renders queue rows with customer, request type, submitted date, status, an
   assert.equal(calls[0].url, "/ServicingOrder");
   assert.equal(calls[0].options?.headers?.["x-authenticated-role"], "csr");
   assert.equal(calls[0].options?.headers?.["x-csr-staff-id"], DEMO_CSR_ACCOUNT.staffId);
+});
+
+test("supports status filtering with clear/reset behavior for CSR queue", async () => {
+  const session = authenticateCsr({
+    password: DEMO_CSR_ACCOUNT.password,
+    staffId: DEMO_CSR_ACCOUNT.staffId,
+  });
+  const allServicingOrders = [
+    {
+      servicingOrderId: "SO_20001",
+      customerName: "Jamie Cortez",
+      requestType: "Address Update",
+      submittedDate: "2026-04-21T10:15:00.000Z",
+      servicingOrderStatus: "Pending",
+    },
+    {
+      servicingOrderId: "SO_20002",
+      customerName: "Ash Knight",
+      requestType: "Email Update",
+      submittedDate: "2026-04-22T06:20:00.000Z",
+      servicingOrderStatus: "Completed",
+    },
+  ];
+  const pendingServicingOrders = allServicingOrders.filter(
+    (order) => order.servicingOrderStatus === "Pending",
+  );
+
+  const calls = [];
+  const fetchImpl = async (url, options) => {
+    calls.push({ options, url });
+
+    if (url.includes("?status=Pending")) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => pendingServicingOrders,
+      };
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      json: async () => allServicingOrders,
+    };
+  };
+
+  const fixture = createDashboardFixture({ fetchImpl, session });
+
+  await fixture.queueLoaded;
+
+  const filterOptions = [...fixture.statusFilterSelect.options].map((option) => option.value);
+  assert.deepEqual(filterOptions, ["", ...CSR_QUEUE_SUPPORTED_STATUSES]);
+
+  fixture.statusFilterSelect.value = "Pending";
+  fixture.statusFilterSelect.dispatchEvent(new fixture.document.defaultView.Event("change"));
+  await fixture.waitForQueueLoad();
+
+  assert.equal(calls[1].url, "/ServicingOrder?status=Pending");
+  const filteredRows = [...fixture.document.querySelectorAll("[data-csr-queue-body] tr")];
+  assert.equal(filteredRows.length, 1);
+  assert.equal(filteredRows[0].querySelectorAll("td")[3]?.textContent?.trim(), "Pending");
+  assert.match(
+    fixture.document.querySelector("[data-queue-status]")?.textContent ?? "",
+    /with status Pending/i,
+  );
+
+  const clearFilterButton = fixture.document.querySelector("[data-queue-status-clear]");
+  assert.ok(clearFilterButton);
+  clearFilterButton.click();
+  await fixture.waitForQueueLoad();
+
+  assert.equal(fixture.statusFilterSelect.value, "");
+  assert.equal(calls[2].url, "/ServicingOrder");
 });
 
 test("redirects to CSR login and clears session when queue API responds unauthorized", async () => {

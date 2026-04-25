@@ -80,6 +80,17 @@
                 </button>
               </div>
             </form>
+            <div class="queue-filter-controls">
+              <label for="queue-status-filter">Filter by status</label>
+              <select id="queue-status-filter" data-queue-status-filter>
+                <option value="">All statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+              <button type="button" data-queue-status-clear>Clear filter</button>
+            </div>
             <p class="queue-status" data-queue-status role="status" aria-live="polite">
               Loading queue data...
             </p>

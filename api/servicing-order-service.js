@@ -432,6 +432,7 @@ export function listServicingOrders({
   const authenticatedCsrStaffId = normalizeOptionalText(authContext?.staffId)
   const statusFilter = normalizeOptionalText(query.status)
   const customerReferenceFilter = normalizeOptionalText(query.customerReference)
+  const customerNameFilter = normalizeOptionalText(query.customerName)
 
   let orders
 
@@ -477,6 +478,14 @@ export function listServicingOrders({
       })
     }
 
+    if (customerNameFilter) {
+      throw createRequestError(
+        403,
+        "Forbidden",
+        "customerName filtering is restricted to CSR-authenticated context.",
+      )
+    }
+
     orders = store
       .list()
       .filter((order) => order.customerReference === authenticatedCustomerReference)
@@ -497,6 +506,13 @@ export function listServicingOrders({
 
   if (statusFilter) {
     orders = orders.filter((order) => order.servicingOrderStatus === statusFilter)
+  }
+
+  if (customerNameFilter && role === "csr") {
+    const normalizedCustomerNameFilter = customerNameFilter.toLowerCase()
+    orders = orders.filter((order) =>
+      normalizeTextField(order.customerName).toLowerCase().includes(normalizedCustomerNameFilter),
+    )
   }
 
   if (role === "customer") {

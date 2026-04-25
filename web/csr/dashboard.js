@@ -28,6 +28,10 @@ function setQueueStatus(statusNode, tone, message) {
   statusNode.textContent = message;
 }
 
+function normalizeSearchValue(value) {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
 function getQueueRequestUrl(apiBaseUrl, statusFilter = null) {
   const queueUrl = apiBaseUrl
     ? new URL("/ServicingOrder", apiBaseUrl)
@@ -59,14 +63,18 @@ function createQueueCell(doc, value, className) {
   return cell;
 }
 
-function renderQueueRows(doc, queueBody, servicingOrders) {
+function renderQueueRows(doc, queueBody, servicingOrders, { searchValue = "" } = {}) {
   queueBody.replaceChildren();
+
+  const normalizedSearchValue = normalizeSearchValue(searchValue);
 
   if (!Array.isArray(servicingOrders) || servicingOrders.length === 0) {
     const emptyRow = doc.createElement("tr");
     const emptyCell = createQueueCell(
       doc,
-      "No servicing requests are currently waiting in the queue.",
+      normalizedSearchValue
+        ? `No servicing requests matched customer name "${searchValue.trim()}".`
+        : "No servicing requests are currently waiting in the queue.",
       "queue-empty-cell",
     );
     emptyCell.colSpan = 5;
@@ -117,6 +125,11 @@ function setStatusFilterControlState(clearFilterButton, selectedStatus) {
   clearFilterButton.disabled = !selectedStatus;
 }
 
+function setSearchControlState(customerNameSearch, clearCustomerNameSearch, enabled) {
+  customerNameSearch.disabled = !enabled;
+  clearCustomerNameSearch.disabled = !enabled;
+}
+
 export function setupCsrDashboardPage(doc = document, options = {}) {
   const view = doc.defaultView;
   const storage = options.storage ?? view?.sessionStorage ?? null;
@@ -133,6 +146,8 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
   const queueBody = doc.querySelector("[data-csr-queue-body]");
   const statusFilterSelect = doc.querySelector("[data-queue-status-filter]");
   const clearFilterButton = doc.querySelector("[data-queue-status-clear]");
+  const customerNameSearch = doc.querySelector("[data-customer-name-search]");
+  const clearCustomerNameSearch = doc.querySelector("[data-clear-customer-name-search]");
 
   if (
     !(
@@ -144,6 +159,8 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
       && queueBody
       && statusFilterSelect
       && clearFilterButton
+      && customerNameSearch
+      && clearCustomerNameSearch
     )
   ) {
     throw new Error("CSR dashboard markup is incomplete.");
@@ -170,6 +187,8 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
       waitForQueueLoad: () => Promise.resolve(),
       session: null,
       statusFilterSelect,
+      customerNameSearch,
+      clearCustomerNameSearch,
     };
   }
 
@@ -177,7 +196,49 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
   csrStaffId.textContent = session.staffId;
   csrRole.textContent = session.title;
 
+  let loadedServicingOrders = [];
   let currentQueueLoad = Promise.resolve();
+
+  function applyClientSideSearch() {
+    const selectedStatus = resolveSelectedQueueStatus(statusFilterSelect);
+    const searchValue = customerNameSearch.value;
+    const normalizedSearchValue = normalizeSearchValue(searchValue);
+    const filteredServicingOrders = normalizedSearchValue
+      ? loadedServicingOrders.filter((order) =>
+        normalizeSearchValue(order.customerName).includes(normalizedSearchValue),
+      )
+      : loadedServicingOrders;
+
+    renderQueueRows(doc, queueBody, filteredServicingOrders, { searchValue });
+
+    if (!normalizedSearchValue) {
+      setQueueStatus(
+        queueStatus,
+        "success",
+        selectedStatus
+          ? `Queue ready: ${loadedServicingOrders.length} request${loadedServicingOrders.length === 1 ? "" : "s"} with status ${selectedStatus}.`
+          : `Queue ready: ${loadedServicingOrders.length} request${loadedServicingOrders.length === 1 ? "" : "s"}.`,
+      );
+      return;
+    }
+
+    if (filteredServicingOrders.length === 0) {
+      setQueueStatus(
+        queueStatus,
+        "info",
+        `No queue matches for customer name "${searchValue.trim()}".`,
+      );
+      return;
+    }
+
+    setQueueStatus(
+      queueStatus,
+      "success",
+      selectedStatus
+        ? `Queue ready: ${filteredServicingOrders.length} of ${loadedServicingOrders.length} request${loadedServicingOrders.length === 1 ? "" : "s"} match "${searchValue.trim()}" with status ${selectedStatus}.`
+        : `Queue ready: ${filteredServicingOrders.length} of ${loadedServicingOrders.length} request${loadedServicingOrders.length === 1 ? "" : "s"} match "${searchValue.trim()}".`,
+    );
+  }
 
   const loadQueue = async () => {
     const selectedStatus = resolveSelectedQueueStatus(statusFilterSelect);
@@ -185,12 +246,14 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
     setStatusFilterControlState(clearFilterButton, selectedStatus);
 
     if (!fetchImpl) {
+      loadedServicingOrders = [];
       setQueueStatus(
         queueStatus,
         "error",
         "Queue unavailable because this browser session cannot call the servicing API.",
       );
       renderQueueRows(doc, queueBody, []);
+      setSearchControlState(customerNameSearch, clearCustomerNameSearch, false);
       return;
     }
 
@@ -225,16 +288,12 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
         throw new Error(`Queue request failed with status ${response.status}.`);
       }
 
-      const servicingOrders = await response.json();
-      renderQueueRows(doc, queueBody, servicingOrders);
-      setQueueStatus(
-        queueStatus,
-        "success",
-        selectedStatus
-          ? `Queue ready: ${servicingOrders.length} request${servicingOrders.length === 1 ? "" : "s"} with status ${selectedStatus}.`
-          : `Queue ready: ${servicingOrders.length} request${servicingOrders.length === 1 ? "" : "s"}.`,
-      );
+      loadedServicingOrders = await response.json();
+      setSearchControlState(customerNameSearch, clearCustomerNameSearch, true);
+      applyClientSideSearch();
     } catch (error) {
+      loadedServicingOrders = [];
+      setSearchControlState(customerNameSearch, clearCustomerNameSearch, false);
       renderQueueRows(doc, queueBody, []);
       setQueueStatus(
         queueStatus,
@@ -250,6 +309,9 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
     return currentQueueLoad;
   }
 
+  setSearchControlState(customerNameSearch, clearCustomerNameSearch, false);
+  customerNameSearch.value = "";
+
   const queueLoaded = triggerQueueLoad();
 
   logoutButton.addEventListener("click", () => {
@@ -258,12 +320,24 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
   });
 
   statusFilterSelect.addEventListener("change", () => {
+    customerNameSearch.value = "";
     void triggerQueueLoad();
   });
 
   clearFilterButton.addEventListener("click", () => {
     statusFilterSelect.value = "";
+    customerNameSearch.value = "";
     void triggerQueueLoad();
+  });
+
+  customerNameSearch.addEventListener("input", () => {
+    applyClientSideSearch();
+  });
+
+  clearCustomerNameSearch.addEventListener("click", () => {
+    customerNameSearch.value = "";
+    applyClientSideSearch();
+    customerNameSearch.focus();
   });
 
   return {
@@ -276,6 +350,8 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
     queueStatus,
     session,
     statusFilterSelect,
+    customerNameSearch,
+    clearCustomerNameSearch,
     waitForQueueLoad: () => currentQueueLoad,
   };
 }

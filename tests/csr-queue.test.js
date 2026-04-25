@@ -24,7 +24,7 @@ const dashboardMarkup = readFileSync(
 
 function createDashboardFixture({ session = null, fetchImpl } = {}) {
   const dom = new JSDOM(dashboardMarkup, { url: `http://localhost${CSR_DASHBOARD_PATH}` });
-  const { document, sessionStorage } = dom.window;
+  const { document, Event, sessionStorage } = dom.window;
 
   if (session) {
     sessionStorage.setItem(CSR_SESSION_STORAGE_KEY, JSON.stringify(session));
@@ -44,6 +44,7 @@ function createDashboardFixture({ session = null, fetchImpl } = {}) {
   return {
     ...controls,
     document,
+    Event,
     getNavigatedTo: () => navigatedTo,
     sessionStorage,
   };
@@ -165,7 +166,7 @@ test("supports status filtering with clear/reset behavior for CSR queue", async 
   assert.deepEqual(filterOptions, ["", ...CSR_QUEUE_SUPPORTED_STATUSES]);
 
   fixture.statusFilterSelect.value = "Pending";
-  fixture.statusFilterSelect.dispatchEvent(new fixture.document.defaultView.Event("change"));
+  fixture.statusFilterSelect.dispatchEvent(new fixture.Event("change", { bubbles: true }));
   await fixture.waitForQueueLoad();
 
   assert.equal(calls[1].url, "/ServicingOrder?status=Pending");
@@ -184,6 +185,84 @@ test("supports status filtering with clear/reset behavior for CSR queue", async 
 
   assert.equal(fixture.statusFilterSelect.value, "");
   assert.equal(calls[2].url, "/ServicingOrder");
+});
+
+test("supports exact and partial customer-name search with clear no-match messaging", async () => {
+  const session = authenticateCsr({
+    password: DEMO_CSR_ACCOUNT.password,
+    staffId: DEMO_CSR_ACCOUNT.staffId,
+  });
+  const servicingOrders = [
+    {
+      servicingOrderId: "SO_10001",
+      customerName: "Jane Doe",
+      requestType: "Address Update",
+      submittedDate: "2026-04-22T10:15:00.000Z",
+      servicingOrderStatus: "Pending",
+    },
+    {
+      servicingOrderId: "SO_10002",
+      customerName: "Alex Quinn",
+      requestType: "Email Update",
+      submittedDate: "2026-04-23T06:20:00.000Z",
+      servicingOrderStatus: "In Progress",
+    },
+    {
+      servicingOrderId: "SO_10003",
+      customerName: "Riley Hart",
+      requestType: "Phone Update",
+      submittedDate: "2026-04-24T06:20:00.000Z",
+      servicingOrderStatus: "Pending",
+    },
+  ];
+
+  const fixture = createDashboardFixture({
+    fetchImpl: async () => ({
+      ok: true,
+      status: 200,
+      json: async () => servicingOrders,
+    }),
+    session,
+  });
+
+  await fixture.queueLoaded;
+
+  const searchInput = fixture.document.querySelector("[data-customer-name-search]");
+  const clearSearchButton = fixture.document.querySelector("[data-clear-customer-name-search]");
+
+  assert.ok(searchInput);
+  assert.ok(clearSearchButton);
+  assert.equal(searchInput.disabled, false);
+  assert.equal(clearSearchButton.disabled, false);
+
+  searchInput.value = "Alex Quinn";
+  searchInput.dispatchEvent(new fixture.Event("input", { bubbles: true }));
+
+  let rows = [...fixture.document.querySelectorAll("[data-csr-queue-body] tr")];
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].querySelector("td")?.textContent?.trim(), "Alex Quinn");
+
+  searchInput.value = "ri";
+  searchInput.dispatchEvent(new fixture.Event("input", { bubbles: true }));
+
+  rows = [...fixture.document.querySelectorAll("[data-csr-queue-body] tr")];
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].querySelector("td")?.textContent?.trim(), "Riley Hart");
+
+  searchInput.value = "No Match";
+  searchInput.dispatchEvent(new fixture.Event("input", { bubbles: true }));
+
+  const noMatchRowText =
+    fixture.document.querySelector("[data-csr-queue-body] tr .queue-empty-cell")?.textContent ?? "";
+  assert.match(noMatchRowText, /No servicing requests matched customer name "No Match"\./i);
+  assert.match(
+    fixture.document.querySelector("[data-queue-status]")?.textContent ?? "",
+    /No queue matches for customer name "No Match"\./i,
+  );
+
+  clearSearchButton.dispatchEvent(new fixture.Event("click", { bubbles: true }));
+  rows = [...fixture.document.querySelectorAll("[data-csr-queue-body] tr")];
+  assert.equal(rows.length, 3);
 });
 
 test("redirects to CSR login and clears session when queue API responds unauthorized", async () => {

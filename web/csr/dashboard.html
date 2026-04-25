@@ -70,6 +70,20 @@
               </select>
               <button type="button" data-queue-status-clear>Clear filter</button>
             </div>
+            <div class="queue-search">
+              <label for="customer-name-search" class="queue-search-label">Search customer name</label>
+              <div class="queue-search-controls">
+                <input
+                  id="customer-name-search"
+                  data-customer-name-search
+                  type="search"
+                  placeholder="Enter full or partial customer name"
+                  autocomplete="off"
+                  disabled
+                />
+                <button type="button" data-clear-customer-name-search disabled>Clear</button>
+              </div>
+            </div>
             <p class="queue-status" data-queue-status role="status" aria-live="polite">
               Loading queue data...
             </p>

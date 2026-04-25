@@ -5,19 +5,102 @@ import {
   getCsrSession,
 } from "./auth.js";
 
+export const CSR_REQUEST_DETAIL_PATH = "/csr/request-detail.html";
+
+function formatSubmittedDate(value) {
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.valueOf())) {
+    return "Unavailable";
+  }
+
+  return parsed.toISOString().slice(0, 10);
+}
+
+function setQueueStatus(statusNode, tone, message) {
+  statusNode.dataset.tone = tone;
+  statusNode.textContent = message;
+}
+
+function getQueueRequestUrl(apiBaseUrl) {
+  if (apiBaseUrl) {
+    return new URL("/ServicingOrder", apiBaseUrl).toString();
+  }
+
+  return "/ServicingOrder";
+}
+
+function getRequestDetailUrl(servicingOrderId) {
+  return `${CSR_REQUEST_DETAIL_PATH}?servicingOrderId=${encodeURIComponent(servicingOrderId)}`;
+}
+
+function createQueueCell(doc, value, className) {
+  const cell = doc.createElement("td");
+  cell.textContent = value;
+
+  if (className) {
+    cell.className = className;
+  }
+
+  return cell;
+}
+
+function renderQueueRows(doc, queueBody, servicingOrders) {
+  queueBody.replaceChildren();
+
+  if (!Array.isArray(servicingOrders) || servicingOrders.length === 0) {
+    const emptyRow = doc.createElement("tr");
+    const emptyCell = createQueueCell(
+      doc,
+      "No servicing requests are currently waiting in the queue.",
+      "queue-empty-cell",
+    );
+    emptyCell.colSpan = 5;
+    emptyRow.append(emptyCell);
+    queueBody.append(emptyRow);
+    return;
+  }
+
+  const rows = servicingOrders.map((servicingOrder) => {
+    const row = doc.createElement("tr");
+
+    row.append(
+      createQueueCell(doc, servicingOrder.customerName ?? "Unavailable"),
+      createQueueCell(doc, servicingOrder.requestType ?? "Unavailable"),
+      createQueueCell(doc, formatSubmittedDate(servicingOrder.submittedDate)),
+      createQueueCell(doc, servicingOrder.servicingOrderStatus ?? "Unavailable"),
+    );
+
+    const actionCell = doc.createElement("td");
+    const detailLink = doc.createElement("a");
+    detailLink.className = "request-detail-link";
+    detailLink.href = getRequestDetailUrl(servicingOrder.servicingOrderId ?? "");
+    detailLink.textContent = "Open request";
+    actionCell.append(detailLink);
+    row.append(actionCell);
+
+    return row;
+  });
+
+  queueBody.append(...rows);
+}
+
 export function setupCsrDashboardPage(doc = document, options = {}) {
   const view = doc.defaultView;
   const storage = options.storage ?? view?.sessionStorage ?? null;
   const location = options.location ?? view?.location ?? { pathname: CSR_DASHBOARD_PATH };
-  const navigateTo =
-    options.navigateTo ?? ((target) => view.location.assign(target));
+  const navigateTo = options.navigateTo ?? ((target) => view.location.assign(target));
+  const fetchImpl = options.fetchImpl ?? view?.fetch?.bind(view) ?? null;
+  const apiBaseUrl = options.apiBaseUrl;
 
   const csrName = doc.querySelector("[data-csr-name]");
   const csrStaffId = doc.querySelector("[data-csr-staff-id]");
   const csrRole = doc.querySelector("[data-csr-role]");
   const logoutButton = doc.querySelector("[data-csr-logout]");
+  const queueStatus = doc.querySelector("[data-queue-status]");
+  const queueBody = doc.querySelector("[data-csr-queue-body]");
 
-  if (!(csrName && csrStaffId && csrRole && logoutButton)) {
+  if (!(csrName && csrStaffId && csrRole && logoutButton && queueStatus && queueBody)) {
     throw new Error("CSR dashboard markup is incomplete.");
   }
 
@@ -36,6 +119,9 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
       csrRole,
       csrStaffId,
       logoutButton,
+      queueBody,
+      queueStatus,
+      queueLoaded: Promise.resolve(),
       session: null,
     };
   }
@@ -43,6 +129,60 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
   csrName.textContent = session.name;
   csrStaffId.textContent = session.staffId;
   csrRole.textContent = session.title;
+
+  const queueLoaded = (async () => {
+    if (!fetchImpl) {
+      setQueueStatus(
+        queueStatus,
+        "error",
+        "Queue unavailable because this browser session cannot call the servicing API.",
+      );
+      renderQueueRows(doc, queueBody, []);
+      return;
+    }
+
+    setQueueStatus(queueStatus, "info", "Loading queue data...");
+
+    try {
+      const response = await fetchImpl(getQueueRequestUrl(apiBaseUrl), {
+        headers: {
+          "x-authenticated-role": "csr",
+          "x-csr-staff-id": session.staffId,
+        },
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        clearCsrSession(storage);
+        navigateTo(
+          buildCsrLoginUrl({
+            next: location.pathname ?? CSR_DASHBOARD_PATH,
+            reason: "auth-required",
+          }),
+        );
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Queue request failed with status ${response.status}.`);
+      }
+
+      const servicingOrders = await response.json();
+      renderQueueRows(doc, queueBody, servicingOrders);
+      setQueueStatus(
+        queueStatus,
+        "success",
+        `Queue ready: ${servicingOrders.length} request${servicingOrders.length === 1 ? "" : "s"}.`,
+      );
+    } catch (error) {
+      renderQueueRows(doc, queueBody, []);
+      setQueueStatus(
+        queueStatus,
+        "error",
+        "Queue unavailable. Confirm the servicing API is running and try again.",
+      );
+      queueStatus.dataset.errorDetail = error instanceof Error ? error.message : "Unknown error";
+    }
+  })();
 
   logoutButton.addEventListener("click", () => {
     clearCsrSession(storage);
@@ -54,6 +194,9 @@ export function setupCsrDashboardPage(doc = document, options = {}) {
     csrRole,
     csrStaffId,
     logoutButton,
+    queueBody,
+    queueLoaded,
+    queueStatus,
     session,
   };
 }

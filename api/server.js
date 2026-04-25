@@ -11,6 +11,7 @@ import {
   updateServicingOrder,
 } from "./servicing-order-service.js"
 import { createInMemoryServicingOrderStore } from "./servicing-order-store.js"
+import { createOperationalLogEventWriter } from "./operational-logger.js"
 
 function getHeaderValue(value) {
   return Array.isArray(value) ? value[0] : value
@@ -67,6 +68,7 @@ async function handleInitiateRoute(request, response, dependencies) {
       store: dependencies.store,
       now: dependencies.now,
       generateId: dependencies.generateId,
+      logEvent: dependencies.logEvent,
     })
 
     writeJson(response, 201, responseOrder)
@@ -84,6 +86,7 @@ async function handleUpdateRoute(request, response, dependencies, servicingOrder
       payload,
       store: dependencies.store,
       now: dependencies.now,
+      logEvent: dependencies.logEvent,
     })
 
     writeJson(response, 200, updatedOrder)
@@ -102,6 +105,7 @@ function handleListRoute(request, response, dependencies, requestUrl) {
         servicingOrderId: requestUrl.searchParams.get("servicingOrderId"),
       },
       store: dependencies.store,
+      logEvent: dependencies.logEvent,
     })
 
     writeJson(response, 200, servicingOrders)
@@ -116,6 +120,7 @@ function handleGetByIdRoute(request, response, dependencies, servicingOrderId) {
       authContext: buildAuthContext(request.headers),
       servicingOrderId,
       store: dependencies.store,
+      logEvent: dependencies.logEvent,
     })
 
     writeJson(response, 200, servicingOrder)
@@ -124,13 +129,14 @@ function handleGetByIdRoute(request, response, dependencies, servicingOrderId) {
   }
 }
 
-function handleCustomerProfileRoute(request, response, requestUrl) {
+function handleCustomerProfileRoute(request, response, dependencies, requestUrl) {
   try {
     const customerProfile = getCustomerProfile({
       authContext: buildAuthContext(request.headers),
       query: {
         customerReference: requestUrl.searchParams.get("customerReference"),
       },
+      logEvent: dependencies.logEvent,
     })
 
     writeJson(response, 200, customerProfile)
@@ -163,7 +169,7 @@ function routeRequest(request, response, dependencies) {
   }
 
   if (requestUrl.pathname === "/CustomerProfile" && request.method === "GET") {
-    handleCustomerProfileRoute(request, response, requestUrl)
+    handleCustomerProfileRoute(request, response, dependencies, requestUrl)
     return
   }
 
@@ -226,9 +232,10 @@ export function createApiServer({
   store = createInMemoryServicingOrderStore(),
   now,
   generateId,
+  logEvent = createOperationalLogEventWriter(),
 } = {}) {
   const server = http.createServer((request, response) => {
-    routeRequest(request, response, { store, now, generateId })
+    routeRequest(request, response, { store, now, generateId, logEvent })
   })
 
   return { server, store }

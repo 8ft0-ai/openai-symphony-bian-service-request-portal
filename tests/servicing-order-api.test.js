@@ -128,6 +128,7 @@ async function updateRequest(
     headers: {
       "content-type": "application/json",
       "x-authenticated-role": "csr",
+      "x-csr-staff-id": "csr.queue.ops",
       ...headers,
     },
     body: JSON.stringify(payload),
@@ -189,6 +190,7 @@ function createStoredOrder({
         timestamp: submittedDate,
       },
     ],
+    statusChangeAudit: [],
   }
 }
 
@@ -404,6 +406,7 @@ test("returns servicing order queue data for CSR users", async () => {
       ],
     )
     assert.ok(Array.isArray(response.body[0].internalNotes))
+    assert.ok(Array.isArray(response.body[0].statusChangeAudit))
   })
 })
 
@@ -521,6 +524,7 @@ test("returns only own servicing orders for customer history retrieval", async (
     assert.deepEqual(response.body.map((order) => order.servicingOrderId), ["SO_TEST_4001"])
     assert.equal(response.body[0].customerReference, "CUST_11111")
     assert.equal("internalNotes" in response.body[0], false)
+    assert.equal("statusChangeAudit" in response.body[0], false)
   })
 })
 
@@ -576,6 +580,7 @@ test("returns a single servicing order by id for CSR users with internal notes",
     assert.equal(response.body.servicingOrderId, "SO_TEST_6001")
     assert.ok(Array.isArray(response.body.internalNotes))
     assert.equal(response.body.internalNotes.length, 1)
+    assert.ok(Array.isArray(response.body.statusChangeAudit))
   })
 })
 
@@ -603,6 +608,7 @@ test("returns a single servicing order by id for owning customer without interna
     assert.equal(response.body.servicingOrderId, "SO_TEST_6002")
     assert.equal(response.body.customerReference, "CUST_11111")
     assert.equal("internalNotes" in response.body, false)
+    assert.equal("statusChangeAudit" in response.body, false)
   })
 })
 
@@ -758,6 +764,12 @@ test("allows CSR status update with internal note append for a valid transition"
       assert.equal(response.body.servicingOrderId, "SO_TEST_6001")
       assert.equal(response.body.servicingOrderStatus, "In Progress")
       assert.equal(response.body.lastUpdateDate, now())
+      assert.deepEqual(response.body.statusChangeAudit.at(-1), {
+        fromStatus: "Pending",
+        toStatus: "In Progress",
+        actor: "csr.queue.ops",
+        timestamp: now(),
+      })
       assert.deepEqual(response.body.internalNotes.at(-1), {
         note: "Verified update details with customer.",
         author: "csr.queue.ops",
@@ -767,6 +779,12 @@ test("allows CSR status update with internal note append for a valid transition"
       const [storedOrder] = store.list()
       assert.equal(storedOrder.servicingOrderStatus, "In Progress")
       assert.equal(storedOrder.lastUpdateDate, now())
+      assert.deepEqual(storedOrder.statusChangeAudit.at(-1), {
+        fromStatus: "Pending",
+        toStatus: "In Progress",
+        actor: "csr.queue.ops",
+        timestamp: now(),
+      })
       assert.deepEqual(storedOrder.internalNotes.at(-1), {
         note: "Verified update details with customer.",
         author: "csr.queue.ops",
@@ -827,6 +845,34 @@ test("rejects non-CSR update attempts", async () => {
       status: 401,
       error: "Unauthorized",
       message: "CSR-authenticated context is required.",
+    })
+  })
+})
+
+test("rejects status updates when CSR staff identity is missing", async () => {
+  await withApiServer(async ({ baseUrl, store }) => {
+    store.create(
+      createStoredOrder({
+        servicingOrderId: "SO_TEST_6006",
+        customerReference: "CUST_11111",
+        customerName: "Alex Quinn",
+        requestType: "Address Update",
+        servicingOrderStatus: "Pending",
+        submittedDate: "2026-04-01T00:00:00.000Z",
+      }),
+    )
+
+    const response = await updateRequest(
+      baseUrl,
+      "SO_TEST_6006",
+      { servicingOrderStatus: "In Progress" },
+      { "x-csr-staff-id": "" },
+    )
+
+    assertErrorResponse(response, {
+      status: 401,
+      error: "Unauthorized",
+      message: "CSR staff identity is required for servicing order status updates.",
     })
   })
 })

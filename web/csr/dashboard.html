@@ -56,14 +56,27 @@
             </p>
           </article>
 
-          <article class="dashboard-card">
-            <p class="section-label">Queue readiness</p>
-            <h2>Queue delivery continues in CSR-003.</h2>
-            <ul class="queue-preview">
-              <li>Cross-customer request queue will render here next.</li>
-              <li>Search, filtering, and request detail screens remain blocked by auth.</li>
-              <li>Manual processing stays under CSR control only.</li>
-            </ul>
+          <article class="dashboard-card queue-panel">
+            <p class="section-label">Manual servicing queue</p>
+            <h2>Cross-customer requests ready for CSR triage.</h2>
+            <p class="queue-status" data-queue-status role="status" aria-live="polite">
+              Loading queue data...
+            </p>
+            <div class="queue-table-wrap">
+              <table class="queue-table">
+                <caption class="sr-only">Servicing request queue across customers</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Customer name</th>
+                    <th scope="col">Request type</th>
+                    <th scope="col">Submitted date</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Action</th>
+                  </tr>
+                </thead>
+                <tbody data-csr-queue-body></tbody>
+              </table>
+            </div>
           </article>
 
           <article class="dashboard-card">

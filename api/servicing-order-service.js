@@ -346,7 +346,11 @@ function assertValidStatusTransition(currentStatus, nextStatus) {
 }
 
 export function toCustomerServicingOrder(servicingOrder) {
-  const { internalNotes, ...customerFacingOrder } = servicingOrder
+  const {
+    internalNotes,
+    statusChangeAudit,
+    ...customerFacingOrder
+  } = servicingOrder
   return structuredClone(customerFacingOrder)
 }
 
@@ -399,6 +403,7 @@ export function createServicingOrder({
     lastUpdateDate: timestamp,
     requestDetails: initiateRequest.requestDetails,
     internalNotes: [buildInternalNote(timestamp)],
+    statusChangeAudit: [],
   }
 
   const storedOrder = store.create(servicingOrder)
@@ -664,6 +669,7 @@ export function updateServicingOrder({
   logEvent,
 }) {
   const role = normalizeTextField(authContext?.role).toLowerCase()
+  const authenticatedCsrStaffId = normalizeOptionalText(authContext?.staffId)
 
   if (role !== "csr") {
     throw createAccessDeniedError({
@@ -696,6 +702,20 @@ export function updateServicingOrder({
 
   const timestamp = now()
   const updatedOrder = structuredClone(existingOrder)
+  const statusChanged =
+    Boolean(requestedStatus) && requestedStatus !== existingOrder.servicingOrderStatus
+
+  if (statusChanged && !authenticatedCsrStaffId) {
+    throw createRequestError(
+      401,
+      "Unauthorized",
+      "CSR staff identity is required for servicing order status updates.",
+    )
+  }
+
+  if (!Array.isArray(updatedOrder.statusChangeAudit)) {
+    updatedOrder.statusChangeAudit = []
+  }
 
   if (requestedStatus && requestedStatus !== updatedOrder.servicingOrderStatus) {
     const previousStatus = updatedOrder.servicingOrderStatus
@@ -706,6 +726,15 @@ export function updateServicingOrder({
       actor: buildOperationalActor(authContext),
       previousStatus,
       nextStatus: requestedStatus,
+    })
+  }
+
+  if (statusChanged) {
+    updatedOrder.statusChangeAudit.push({
+      fromStatus: existingOrder.servicingOrderStatus,
+      toStatus: requestedStatus,
+      actor: authenticatedCsrStaffId,
+      timestamp,
     })
   }
 

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSR Request Detail</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="module" src="./request-detail.js"></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="dashboard-layout">
+        <article class="dashboard-hero" aria-labelledby="csr-request-detail-title">
+          <div class="dashboard-title-group">
+            <p class="eyebrow">CSR Queue</p>
+            <h1 id="csr-request-detail-title">Request detail route</h1>
+            <p class="intro">
+              This route confirms queue navigation context and preserves the CSR-only session
+              boundary ahead of full detail implementation.
+            </p>
+          </div>
+          <div class="session-chip">
+            <span data-csr-name></span>
+          </div>
+        </article>
+
+        <section class="dashboard-grid" aria-label="Request detail context">
+          <article class="dashboard-card">
+            <p class="section-label">Selected request</p>
+            <h2 data-request-detail-id>Unknown request</h2>
+            <p data-request-detail-note>
+              No servicing order was selected from the queue.
+            </p>
+          </article>
+          <article class="dashboard-card">
+            <p class="section-label">Actions</p>
+            <h2>Return to queue</h2>
+            <a class="request-detail-link" href="/csr/dashboard.html">Back to CSR queue</a>
+          </article>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>
